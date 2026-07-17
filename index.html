@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uranai — Chinese Divination Oracle</title>
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --gold: #C4A35A;
+    --gold-dim: #8a7340;
+    --parchment: #e8d5a3;
+    --parchment-dim: #b8a97f;
+    --card-bg: #12121a;
+    --card-border: #2a2a38;
+    --danger: #c46a5a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* subtle background texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(196,163,90,0.05), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(196,163,90,0.04), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+  .screen.active { display: block; }
+
+  .label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-variant: small-caps;
+    text-transform: lowercase;
+    letter-spacing: 0.18em;
+    font-size: 0.78rem;
+    color: var(--gold);
+  }
+
+  h1.title {
+    font-size: 2rem;
+    font-weight: normal;
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--parchment-dim);
+    font-style: italic;
+    margin-top: 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  .hanzi-hero {
+    text-align: center;
+    font-size: 3.2rem;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 30px rgba(196,163,90,0.35);
+  }
+
+  .divider {
+    width: 70px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.5rem auto;
+  }
+
+  /* ---------- Password screen ---------- */
+  #screen-password {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  #screen-password.active { display: flex; }
+
+  .pw-box { width: 100%; max-width: 340px; margin-top: 1.5rem; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--parchment);
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.25s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 90px; }
+  select { appearance: none; -webkit-appearance: none; }
+  input[type="date"], input[type="time"] { color-scheme: dark; }
+
+  button.btn {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-variant: small-caps;
+    letter-spacing: 0.16em;
+    font-size: 0.85rem;
+    padding: 0.75rem 2.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+  }
+  button.btn:hover { background: var(--gold); color: var(--ink); }
+  button.btn.block { width: 100%; margin-top: 0.9rem; }
+  button.btn-quiet {
+    background: none;
+    border: none;
+    color: var(--parchment-dim);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-variant: small-caps;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+  }
+  button.btn-quiet:hover { color: var(--gold); }
+
+  .error-text {
+    color: var(--danger);
+    font-size: 0.9rem;
+    margin-top: 0.7rem;
+    min-height: 1.2em;
+  }
+
+  /* ---------- Top bar ---------- */
+  #topbar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 5;
+    padding: 0.6rem 1rem;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(10,10,15,0.95), rgba(10,10,15,0));
+  }
+  #topbar.visible { display: flex; }
+  .badge-admin {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-variant: small-caps;
+    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    color: var(--ink);
+    background: var(--gold);
+    border-radius: 4px;
+    padding: 0.15rem 0.55rem;
+  }
+
+  /* ---------- Home cards ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+    margin-top: 2rem;
+  }
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+
+  .method-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.8rem 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  }
+  .method-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(196,163,90,0.12);
+  }
+  .method-card .hanzi {
+    font-size: 2.6rem;
+    color: var(--gold);
+    margin-bottom: 0.6rem;
+  }
+  .method-card h3 {
+    font-weight: normal;
+    font-size: 1.15rem;
+    color: var(--parchment);
+    margin-bottom: 0.15rem;
+  }
+  .method-card .en {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-variant: small-caps;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: var(--gold-dim);
+    margin-bottom: 0.7rem;
+  }
+  .method-card p {
+    font-size: 0.86rem;
+    color: var(--parchment-dim);
+    font-style: italic;
+  }
+
+  /* ---------- Forms ---------- */
+  .form-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.8rem 1.5rem;
+    margin-top: 1.8rem;
+  }
+  .field { margin-bottom: 1.2rem; }
+  .field .label { display: block; margin-bottom: 0.4rem; }
+  .form-actions { text-align: center; margin-top: 1.6rem; }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  /* ---------- Loading ---------- */
+  #screen-loading {
+    text-align: center;
+    padding-top: 22vh;
+  }
+  .pulse-symbol {
+    font-size: 4rem;
+    color: var(--gold);
+    animation: pulse 2.2s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.96); text-shadow: 0 0 10px rgba(196,163,90,0.2); }
+    50% { opacity: 1; transform: scale(1.04); text-shadow: 0 0 40px rgba(196,163,90,0.5); }
+  }
+  .loading-text {
+    margin-top: 1.4rem;
+    color: var(--parchment-dim);
+    font-style: italic;
+  }
+
+  /* ---------- Result ---------- */
+  .reading {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 2rem 1.7rem;
+    margin-top: 1.6rem;
+    overflow-x: auto;
+  }
+  .reading h1, .reading h2, .reading h3 {
+    color: var(--gold);
+    font-weight: normal;
+    margin: 1.3em 0 0.5em;
+    line-height: 1.3;
+  }
+  .reading h1:first-child, .reading h2:first-child, .reading h3:first-child { margin-top: 0; }
+  .reading h1 { font-size: 1.5rem; }
+  .reading h2 { font-size: 1.25rem; }
+  .reading h3 { font-size: 1.08rem; }
+  .reading p { margin: 0.75em 0; }
+  .reading strong { color: var(--gold); font-weight: bold; }
+  .reading em { color: var(--parchment-dim); }
+  .reading ul, .reading ol { margin: 0.75em 0 0.75em 1.4em; }
+  .reading pre {
+    font-family: 'Courier New', monospace;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: var(--gold);
+    background: rgba(196,163,90,0.06);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin: 0.9em 0;
+    overflow-x: auto;
+  }
+  .reading hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    margin: 1.5em 0;
+  }
+  .disclaimer {
+    margin-top: 1.6rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--parchment-dim);
+    opacity: 0.75;
+  }
+
+  /* ---------- Lock & error screens ---------- */
+  .center-panel {
+    max-width: 420px;
+    margin: 14vh auto 0;
+    text-align: center;
+  }
+  .center-panel .hanzi-hero { font-size: 2.6rem; }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<div id="topbar">
+  <span id="admin-badge" class="badge-admin" style="display:none">Admin</span>
+  <span style="flex:1"></span>
+  <button class="btn-quiet" onclick="signOut()">Sign Out</button>
+</div>
+
+<!-- ============ PASSWORD SCREEN ============ -->
+<div id="screen-password" class="screen">
+  <div class="hanzi-hero">占</div>
+  <h1 class="title">Uranai</h1>
+  <p class="subtitle">The Hall of Celestial Divination</p>
+  <div class="divider"></div>
+  <div class="pw-box">
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="off"
+           onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="btn block" onclick="checkPassword()">Enter</button>
+    <div class="error-text" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- ============ HOME SCREEN ============ -->
+<div id="screen-home" class="screen">
+  <div style="padding-top:2.5rem">
+    <div class="hanzi-hero">占</div>
+    <h1 class="title">Uranai</h1>
+    <p class="subtitle">Choose your path of divination</p>
+    <div class="divider"></div>
+  </div>
+  <div class="cards">
+    <div class="method-card" onclick="openForm('iching')">
+      <div class="hanzi">易經</div>
+      <h3>I Ching</h3>
+      <div class="en">Book of Changes</div>
+      <p>Cast the ancient hexagrams and receive the oracle's counsel on your question.</p>
+    </div>
+    <div class="method-card" onclick="openForm('bazi')">
+      <div class="hanzi">八字</div>
+      <h3>Ba Zi</h3>
+      <div class="en">Four Pillars of Destiny</div>
+      <p>Your birth moment reveals the elemental currents that shape your fate.</p>
+    </div>
+    <div class="method-card" onclick="openForm('ziwei')">
+      <div class="hanzi">紫微</div>
+      <h3>Zi Wei Dou Shu</h3>
+      <div class="en">Purple Star Astrology</div>
+      <p>The imperial star chart maps the twelve palaces of your destiny.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ I CHING FORM ============ -->
+<div id="screen-form-iching" class="screen">
+  <div style="padding-top:2.5rem">
+    <button class="btn-quiet back-link" onclick="showScreen('home')">← Return</button>
+    <div class="hanzi-hero">易經</div>
+    <h1 class="title">I Ching</h1>
+    <p class="subtitle">Hold your question in your mind, then consult the oracle</p>
+  </div>
+  <div class="form-panel">
+    <div class="field">
+      <label class="label" for="iching-question">Your Question (optional)</label>
+      <textarea id="iching-question" placeholder="What guidance do you seek?"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="submitIChing()">Consult the Oracle</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BA ZI FORM ============ -->
+<div id="screen-form-bazi" class="screen">
+  <div style="padding-top:2.5rem">
+    <button class="btn-quiet back-link" onclick="showScreen('home')">← Return</button>
+    <div class="hanzi-hero">八字</div>
+    <h1 class="title">Ba Zi</h1>
+    <p class="subtitle">The Four Pillars of Destiny</p>
+  </div>
+  <div class="form-panel">
+    <div class="field">
+      <label class="label" for="bazi-date">Date of Birth</label>
+      <input type="date" id="bazi-date">
+    </div>
+    <div class="field">
+      <label class="label" for="bazi-time">Time of Birth</label>
+      <input type="time" id="bazi-time">
+    </div>
+    <div class="field">
+      <label class="label" for="bazi-place">Place of Birth</label>
+      <input type="text" id="bazi-place" placeholder="City, Country">
+    </div>
+    <div class="field">
+      <label class="label" for="bazi-gender">Gender</label>
+      <select id="bazi-gender">
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="bazi-focus">Focus Area</label>
+      <select id="bazi-focus">
+        <option>Full Reading</option>
+        <option>Personality</option>
+        <option>Career</option>
+        <option>Relationships</option>
+        <option>Wealth</option>
+        <option>Health</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="submitBaZi()">Consult the Oracle</button>
+    </div>
+    <div class="error-text" id="bazi-form-error" style="text-align:center"></div>
+  </div>
+</div>
+
+<!-- ============ ZI WEI FORM ============ -->
+<div id="screen-form-ziwei" class="screen">
+  <div style="padding-top:2.5rem">
+    <button class="btn-quiet back-link" onclick="showScreen('home')">← Return</button>
+    <div class="hanzi-hero">紫微斗數</div>
+    <h1 class="title">Zi Wei Dou Shu</h1>
+    <p class="subtitle">Imperial Purple Star Astrology</p>
+  </div>
+  <div class="form-panel">
+    <div class="field">
+      <label class="label" for="ziwei-date">Date of Birth</label>
+      <input type="date" id="ziwei-date">
+    </div>
+    <div class="field">
+      <label class="label" for="ziwei-hour">Birth Hour</label>
+      <select id="ziwei-hour">
+        <option>Zi 子 (11pm–1am)</option>
+        <option>Chou 丑 (1–3am)</option>
+        <option>Yin 寅 (3–5am)</option>
+        <option>Mao 卯 (5–7am)</option>
+        <option>Chen 辰 (7–9am)</option>
+        <option>Si 巳 (9–11am)</option>
+        <option>Wu 午 (11am–1pm)</option>
+        <option>Wei 未 (1–3pm)</option>
+        <option>Shen 申 (3–5pm)</option>
+        <option>You 酉 (5–7pm)</option>
+        <option>Xu 戌 (7–9pm)</option>
+        <option>Hai 亥 (9–11pm)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="ziwei-gender">Gender</label>
+      <select id="ziwei-gender">
+        <option>Male</option>
+        <option>Female</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="ziwei-palace">Palace of Interest</label>
+      <select id="ziwei-palace">
+        <option>All Palaces</option>
+        <option>Ming 命 — Life & Destiny</option>
+        <option>Fu Qi 夫妻 — Marriage</option>
+        <option>Cai Bo 財帛 — Wealth</option>
+        <option>Guan Lu 官祿 — Career</option>
+        <option>Ji E 疾厄 — Health</option>
+        <option>Xiong Di 兄弟 — Siblings</option>
+        <option>Zi Nu 子女 — Children</option>
+        <option>Qian Yi 遷移 — Travel</option>
+        <option>Pu Yi 僕役 — Friends</option>
+        <option>Tian Zhai 田宅 — Property</option>
+        <option>Fu De 福德 — Spiritual Fortune</option>
+        <option>Fu Mu 父母 — Parents</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="submitZiWei()">Consult the Oracle</button>
+    </div>
+    <div class="error-text" id="ziwei-form-error" style="text-align:center"></div>
+  </div>
+</div>
+
+<!-- ============ LOADING SCREEN ============ -->
+<div id="screen-loading" class="screen">
+  <div class="pulse-symbol" id="loading-symbol">☯</div>
+  <p class="loading-text">The oracle contemplates your fate…</p>
+</div>
+
+<!-- ============ RESULT SCREEN ============ -->
+<div id="screen-result" class="screen">
+  <div style="padding-top:2.5rem">
+    <div class="hanzi-hero" id="result-hanzi">易經</div>
+    <h1 class="title" id="result-title">Your Reading</h1>
+    <div class="divider"></div>
+  </div>
+  <div class="reading" id="result-content"></div>
+  <p class="disclaimer">This reading is offered for reflection and entertainment.
+     The oracle illuminates paths — the walking is yours alone.</p>
+  <div style="text-align:center; margin-top:1.5rem">
+    <button class="btn" id="new-reading-btn" onclick="newReading()">New Reading</button>
+  </div>
+</div>
+
+<!-- ============ LOCK SCREEN ============ -->
+<div id="screen-lock" class="screen">
+  <div class="center-panel">
+    <div class="hanzi-hero">🔒</div>
+    <h1 class="title">The Oracle Rests</h1>
+    <div class="divider"></div>
+    <p style="color:var(--parchment-dim)">You have used your free reading.<br>
+       Enter the admin password to continue.</p>
+    <div class="pw-box" style="margin:1.5rem auto 0">
+      <input type="password" id="lock-pw-input" placeholder="Admin password" autocomplete="off"
+             onkeydown="if(event.key==='Enter')checkLockPassword()">
+      <button class="btn block" onclick="checkLockPassword()">Unlock</button>
+      <div class="error-text" id="lock-pw-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ERROR SCREEN ============ -->
+<div id="screen-error" class="screen">
+  <div class="center-panel">
+    <div class="hanzi-hero">凶</div>
+    <h1 class="title">The Oracle Is Silent</h1>
+    <div class="divider"></div>
+    <p style="color:var(--parchment-dim)" id="error-message">Something went wrong.</p>
+    <div style="margin-top:1.6rem">
+      <button class="btn" onclick="retryReading()">Retry</button>
+      <div style="margin-top:0.8rem">
+        <button class="btn-quiet" onclick="showScreen('home')">Return Home</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ACCESS CONTROL
+   Passwords, API keys, and system prompts live server-side
+   (/api/auth, /api/reading). The session token stored here
+   is signed by the server and verified on every request.
+   ========================================================= */
+const SESSION_KEY = "uranai-session";
+
+function getSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if ((s.role === "admin" || s.role === "user") && s.token) return s;
+  } catch (e) { /* corrupt session */ }
+  return null;
+}
+
+function setSession(session) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  updateTopbar();
+}
+
+function signOut() {
+  localStorage.removeItem(SESSION_KEY);
+  updateTopbar();
+  document.getElementById("pw-input").value = "";
+  document.getElementById("pw-error").textContent = "";
+  showScreen("password");
+}
+
+async function authenticate(password) {
+  const response = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password })
+  });
+  if (response.status === 401) return null; // wrong password
+  if (!response.ok) throw new Error("auth-failed");
+  return response.json(); // { role, token }
+}
+
+async function checkPassword() {
+  const pw = document.getElementById("pw-input").value;
+  const errEl = document.getElementById("pw-error");
+  try {
+    const auth = await authenticate(pw);
+    if (!auth) {
+      errEl.textContent = "The gate does not open. Try again.";
+      return;
+    }
+    setSession(
+      auth.role === "admin"
+        ? { role: "admin", token: auth.token }
+        : { role: "user", readingUsed: false, token: auth.token }
+    );
+    errEl.textContent = "";
+    document.getElementById("pw-input").value = "";
+    showScreen("home");
+  } catch (e) {
+    errEl.textContent = "Could not reach the gatekeeper. Try again.";
+  }
+}
+
+async function checkLockPassword() {
+  const pw = document.getElementById("lock-pw-input").value;
+  const errEl = document.getElementById("lock-pw-error");
+  try {
+    const auth = await authenticate(pw);
+    if (!auth || auth.role !== "admin") {
+      errEl.textContent = "Incorrect admin password.";
+      return;
+    }
+    setSession({ role: "admin", token: auth.token });
+    errEl.textContent = "";
+    document.getElementById("lock-pw-input").value = "";
+    showScreen("home");
+  } catch (e) {
+    errEl.textContent = "Could not reach the gatekeeper. Try again.";
+  }
+}
+
+function updateTopbar() {
+  const session = getSession();
+  const topbar = document.getElementById("topbar");
+  const badge = document.getElementById("admin-badge");
+  if (session) {
+    topbar.classList.add("visible");
+    badge.style.display = session.role === "admin" ? "inline-block" : "none";
+  } else {
+    topbar.classList.remove("visible");
+  }
+}
+
+/* =========================================================
+   SCREEN MANAGEMENT
+   ========================================================= */
+const SCREENS = ["password", "home", "form-iching", "form-bazi", "form-ziwei",
+                 "loading", "result", "lock", "error"];
+
+function showScreen(name) {
+  SCREENS.forEach(s => {
+    document.getElementById("screen-" + s).classList.toggle("active", s === name);
+  });
+  window.scrollTo(0, 0);
+}
+
+function openForm(method) {
+  const session = getSession();
+  if (!session) { showScreen("password"); return; }
+  if (session.role === "user" && session.readingUsed) {
+    showScreen("lock");
+    return;
+  }
+  showScreen("form-" + method);
+}
+
+function newReading() {
+  const session = getSession();
+  if (session && session.role === "user" && session.readingUsed) {
+    showScreen("lock");
+  } else {
+    showScreen("home");
+  }
+}
+
+/* =========================================================
+   API CALL — proxied through /api/reading; the serverless
+   function holds the provider keys and system prompts
+   ========================================================= */
+async function requestReading(method, fields, token) {
+  const response = await fetch("/api/reading", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, method, fields })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data.error || "api-error");
+    err.status = response.status;
+    throw err;
+  }
+  return data; // { reading, token? }
+}
+
+/* =========================================================
+   READING FLOW
+   ========================================================= */
+let lastRequest = null; // { method, fields, hanzi, title, symbol }
+
+function submitIChing() {
+  const question = document.getElementById("iching-question").value.trim();
+  startReading({
+    method: "iching",
+    fields: { question },
+    hanzi: "易經",
+    title: "The Oracle Speaks",
+    symbol: "☯"
+  });
+}
+
+function submitBaZi() {
+  const date = document.getElementById("bazi-date").value;
+  const errEl = document.getElementById("bazi-form-error");
+  if (!date) { errEl.textContent = "Please enter your date of birth."; return; }
+  errEl.textContent = "";
+  startReading({
+    method: "bazi",
+    fields: {
+      date,
+      time: document.getElementById("bazi-time").value,
+      place: document.getElementById("bazi-place").value.trim(),
+      gender: document.getElementById("bazi-gender").value,
+      focus: document.getElementById("bazi-focus").value
+    },
+    hanzi: "八字",
+    title: "Your Four Pillars",
+    symbol: "八"
+  });
+}
+
+function submitZiWei() {
+  const date = document.getElementById("ziwei-date").value;
+  const errEl = document.getElementById("ziwei-form-error");
+  if (!date) { errEl.textContent = "Please enter your date of birth."; return; }
+  errEl.textContent = "";
+  startReading({
+    method: "ziwei",
+    fields: {
+      date,
+      hour: document.getElementById("ziwei-hour").value,
+      gender: document.getElementById("ziwei-gender").value,
+      palace: document.getElementById("ziwei-palace").value
+    },
+    hanzi: "紫微",
+    title: "Your Star Chart",
+    symbol: "紫"
+  });
+}
+
+async function startReading(request) {
+  const session = getSession();
+  if (!session) { showScreen("password"); return; }
+  if (session.role === "user" && session.readingUsed) {
+    showScreen("lock");
+    return;
+  }
+
+  lastRequest = request;
+  document.getElementById("loading-symbol").textContent = request.symbol;
+  showScreen("loading");
+
+  try {
+    const data = await requestReading(request.method, request.fields, session.token);
+
+    document.getElementById("result-hanzi").textContent = request.hanzi;
+    document.getElementById("result-title").textContent = request.title;
+    document.getElementById("result-content").innerHTML = renderMarkdown(data.reading);
+    showScreen("result");
+
+    // The server reissues the user token marked as used
+    if (session.role === "user") {
+      setSession({ role: "user", readingUsed: true, token: data.token || session.token });
+    }
+  } catch (err) {
+    if (err.status === 401) { signOut(); return; } // invalid/expired session token
+    if (err.status === 403) {
+      setSession({ ...session, readingUsed: true });
+      showScreen("lock");
+      return;
+    }
+    const msgEl = document.getElementById("error-message");
+    if (err.message === "oracle-unreachable") {
+      msgEl.textContent = "Oracle is unreachable — check your API key.";
+    } else {
+      msgEl.textContent = "The connection to the oracle was disturbed. Please try again.";
+    }
+    showScreen("error");
+  }
+}
+
+function retryReading() {
+  if (lastRequest) {
+    startReading(lastRequest);
+  } else {
+    showScreen("home");
+  }
+}
+
+/* =========================================================
+   MINIMAL MARKDOWN RENDERER
+   ========================================================= */
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function inlineMd(s) {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function renderMarkdown(md) {
+  const lines = escapeHtml(md).split("\n");
+  const out = [];
+  let inCode = false, inList = false, listTag = "ul", para = [];
+
+  const flushPara = () => {
+    if (para.length) {
+      out.push("<p>" + inlineMd(para.join("<br>")) + "</p>");
+      para = [];
+    }
+  };
+  const closeList = () => {
+    if (inList) { out.push("</" + listTag + ">"); inList = false; }
+  };
+
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, "");
+
+    if (/^```/.test(line.trim())) {
+      flushPara(); closeList();
+      out.push(inCode ? "</pre>" : "<pre>");
+      inCode = !inCode;
+      continue;
+    }
+    if (inCode) { out.push(raw); continue; }
+
+    const h = line.match(/^(#{1,6})\s+(.*)/);
+    if (h) {
+      flushPara(); closeList();
+      const level = Math.min(h[1].length, 3);
+      out.push(`<h${level}>` + inlineMd(h[2]) + `</h${level}>`);
+      continue;
+    }
+    if (/^(---|\*\*\*|___)\s*$/.test(line)) {
+      flushPara(); closeList();
+      out.push("<hr>");
+      continue;
+    }
+    const ul = line.match(/^\s*[-*]\s+(.*)/);
+    const ol = line.match(/^\s*\d+[.)]\s+(.*)/);
+    if (ul || ol) {
+      flushPara();
+      const tag = ul ? "ul" : "ol";
+      if (!inList || listTag !== tag) { closeList(); out.push("<" + tag + ">"); inList = true; listTag = tag; }
+      out.push("<li>" + inlineMd((ul || ol)[1]) + "</li>");
+      continue;
+    }
+    if (line.trim() === "") {
+      flushPara(); closeList();
+      continue;
+    }
+    closeList();
+    para.push(line);
+  }
+  flushPara(); closeList();
+  if (inCode) out.push("</pre>");
+  return out.join("\n");
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+(function init() {
+  updateTopbar();
+  const session = getSession();
+  showScreen(session ? "home" : "password");
+})();
+</script>
+</body>
+</html>
