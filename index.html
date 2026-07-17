@@ -407,6 +407,36 @@
     max-width: 24ch;
   }
 
+  /* ---------- ask-the-oracle banner card ---------- */
+
+  .ask-card {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    min-height: 0;
+    gap: 1.8rem;
+    padding: 1.7rem 2.2rem;
+  }
+  .ask-card .scroll-hanzi {
+    writing-mode: horizontal-tb;
+    flex: 0 0 auto;
+    min-height: 0;
+    font-size: 2.7rem;
+  }
+  .ask-card .card-eyebrow { margin-bottom: 0.4rem; text-indent: 0; }
+  .ask-card h3 { margin: 0 0 0.3rem; }
+  .ask-card p { max-width: none; }
+  @media (max-width: 680px) {
+    .ask-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.6rem;
+      padding: 1.6rem 1.2rem;
+    }
+    .ask-card .card-eyebrow { text-indent: 0.3em; }
+  }
+
   /* ---------- admin: oracle keys ---------- */
 
   .admin-keys {
@@ -741,7 +771,7 @@
     <div class="hall-emblem hanzi">占</div>
     <h1 class="title">Uranai</h1>
     <div class="rule"></div>
-    <p class="subtitle">Three paths cross the night sky. Choose the one that calls to you.</p>
+    <p class="subtitle">Three ancient paths cross the night sky — or bring your question straight to the oracle.</p>
   </div>
 
   <div class="cards">
@@ -765,6 +795,15 @@
       <div class="scroll-hanzi long">紫微斗數</div>
       <h3>Zi Wei Dou Shu</h3>
       <p>The imperial chart maps the twelve palaces of your destiny.</p>
+    </div>
+    <div class="method-card ask-card" role="button" tabindex="0" onclick="openForm('ask')"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('ask')}">
+      <div class="scroll-hanzi">問</div>
+      <div>
+        <div class="card-eyebrow">Direct Counsel</div>
+        <h3>Ask the Oracle</h3>
+        <p>No casting, no charts — bring any question directly before the oracle.</p>
+      </div>
     </div>
   </div>
 
@@ -800,11 +839,32 @@
   <div class="form-panel">
     <div class="field">
       <label class="label" for="iching-question">Your question — or leave blank for an open reading</label>
-      <textarea id="iching-question" placeholder="What guidance do you seek?"></textarea>
+      <textarea id="iching-question" maxlength="1000" placeholder="What guidance do you seek?"></textarea>
     </div>
     <div class="form-actions">
       <button class="btn" onclick="submitIChing()">Consult the Oracle</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ ASK FORM ============ -->
+<div id="screen-form-ask" class="screen">
+  <div class="form-head">
+    <button class="btn-quiet back-link" onclick="showScreen('home')">← The Hall</button>
+    <div class="form-hanzi">問</div>
+    <h1 class="title">Ask the Oracle</h1>
+    <div class="rule"></div>
+    <p class="subtitle">Speak plainly — the oracle listens.</p>
+  </div>
+  <div class="form-panel">
+    <div class="field">
+      <label class="label" for="ask-question">Your question</label>
+      <textarea id="ask-question" maxlength="1500" placeholder="What weighs on your mind?"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="submitAsk()">Consult the Oracle</button>
+    </div>
+    <div class="error-text" id="ask-form-error" style="text-align:center"></div>
   </div>
 </div>
 
@@ -1037,14 +1097,16 @@ async function authenticate(password) {
   });
   const data = await response.json().catch(() => ({}));
   if (response.ok) return data; // { role, token }
-  if (response.status === 401) return { error: data.error || "invalid-password" };
+  if (response.status === 401 || response.status === 429) {
+    return { error: data.error || "invalid-password" };
+  }
   throw new Error("auth-failed");
 }
 
 function authErrorMessage(code) {
-  return code === "key-used"
-    ? "That key has already granted its reading."
-    : "The gate does not open. Try again.";
+  if (code === "key-used") return "That key has already granted its readings.";
+  if (code === "rate-limited") return "Too many attempts. Let the incense burn a moment, then try again.";
+  return "The gate does not open. Try again.";
 }
 
 async function applyAuth(auth, inputEl, errEl) {
@@ -1098,8 +1160,8 @@ function updateTopbar() {
 /* =========================================================
    SCREEN MANAGEMENT
    ========================================================= */
-const SCREENS = ["password", "home", "form-iching", "form-bazi", "form-ziwei",
-                 "loading", "result", "lock", "error"];
+const SCREENS = ["password", "home", "form-ask", "form-iching", "form-bazi",
+                 "form-ziwei", "loading", "result", "lock", "error"];
 
 function showScreen(name) {
   SCREENS.forEach(s => {
@@ -1156,6 +1218,20 @@ async function requestReading(method, fields, token) {
    READING FLOW
    ========================================================= */
 let lastRequest = null; // { method, fields, hanzi, title, symbol }
+
+function submitAsk() {
+  const question = document.getElementById("ask-question").value.trim();
+  const errEl = document.getElementById("ask-form-error");
+  if (!question) { errEl.textContent = "The oracle cannot answer silence — ask your question."; return; }
+  errEl.textContent = "";
+  startReading({
+    method: "ask",
+    fields: { question },
+    hanzi: "問",
+    title: "The Oracle Answers",
+    symbol: "問"
+  });
+}
 
 function submitIChing() {
   const question = document.getElementById("iching-question").value.trim();
@@ -1240,7 +1316,9 @@ async function startReading(request) {
       return;
     }
     const msgEl = document.getElementById("error-message");
-    if (err.message === "oracle-unreachable") {
+    if (err.status === 429) {
+      msgEl.textContent = "The oracle must rest between consultations. Return in a minute.";
+    } else if (err.message === "oracle-unreachable") {
       msgEl.textContent = "Oracle is unreachable — check your API key.";
     } else {
       msgEl.textContent = "The connection to the oracle was disturbed. Please try again.";

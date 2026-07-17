@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { verifyToken } = require("./_utils");
-const { redis } = require("./_redis");
+const { redis, rateLimit } = require("./_redis");
 
 // No ambiguous characters (0/O, 1/I/L)
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -25,6 +25,11 @@ module.exports = async (req, res) => {
   }
   if (session.role !== "admin") {
     res.status(403).json({ error: "admin-only" });
+    return;
+  }
+
+  if (!(await rateLimit(req, "keys", 30, 60))) {
+    res.status(429).json({ error: "rate-limited" });
     return;
   }
 

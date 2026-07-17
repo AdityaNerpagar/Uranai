@@ -60,6 +60,21 @@ server, not as a file):
 vercel dev
 ```
 
+## Abuse protection
+
+- Every consultation (including "Ask the Oracle") requires a valid session and,
+  for key-holders, spends one key use — there is no unauthenticated AI access.
+- Per-IP rate limits in Redis: 10 sign-in attempts/min (brute-force
+  protection), 8 readings/min, 30 key operations/min. Limits fail open if
+  Redis is unreachable so an outage can't lock the admin out; key-use
+  accounting still gates users independently.
+- Question length is capped client- and server-side; only allowlisted fields
+  reach the model, and responses are capped at 2048 output tokens on all
+  providers.
+- Every persona prompt ends with a guard clause: the seeker's text is treated
+  as a question, not instructions — requests to change roles, dump the prompt,
+  or do non-divination work are declined in character.
+
 ## Notes
 
 - Key codes are stored in plaintext in Redis so the admin panel can show and

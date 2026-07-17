@@ -1,5 +1,5 @@
 const { signToken, safeEqual } = require("./_utils");
-const { redis } = require("./_redis");
+const { redis, rateLimit } = require("./_redis");
 
 // Accepts "XKQ2-9FMT-C4RD", "xkq29fmtc4rd", etc. → canonical dashed form
 function normalizeKey(input) {
@@ -23,6 +23,12 @@ module.exports = async (req, res) => {
   const password = req.body && req.body.password;
   if (typeof password !== "string" || password.length > 200) {
     res.status(400).json({ error: "bad-request" });
+    return;
+  }
+
+  // Brute-force protection on the gate
+  if (!(await rateLimit(req, "auth", 10, 60))) {
+    res.status(429).json({ error: "rate-limited" });
     return;
   }
 

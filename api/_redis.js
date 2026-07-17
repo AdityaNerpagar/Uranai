@@ -19,4 +19,23 @@ async function redis(...command) {
   return data.result;
 }
 
-module.exports = { redis };
+function clientIp(req) {
+  const forwarded = (req.headers && req.headers["x-forwarded-for"]) || "";
+  return String(forwarded).split(",")[0].trim() ||
+    (req.headers && req.headers["x-real-ip"]) || "unknown";
+}
+
+// Sliding per-IP counter. Fails open: a Redis outage shouldn't lock the
+// door — key-use accounting still gates users independently.
+async function rateLimit(req, bucket, limit, windowSec) {
+  try {
+    const key = "rl:" + bucket + ":" + clientIp(req);
+    const count = await redis("INCR", key);
+    if (count === 1) await redis("EXPIRE", key, windowSec);
+    return count <= limit;
+  } catch {
+    return true;
+  }
+}
+
+module.exports = { redis, rateLimit };
