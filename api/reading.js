@@ -1,4 +1,5 @@
-const { signToken, verifyToken } = require("./_utils");
+const { verifyToken } = require("./_utils");
+const { redis } = require("./_redis");
 
 /* ---------- System prompts (server-side only) ---------- */
 
@@ -179,10 +180,6 @@ module.exports = async (req, res) => {
     res.status(401).json({ error: "invalid-session" });
     return;
   }
-  if (session.role === "user" && session.used) {
-    res.status(403).json({ error: "reading-used" });
-    return;
-  }
 
   const systemPrompt = SYSTEM_PROMPTS[method];
   const userMessage = buildUserMessage(method, fields);
@@ -191,15 +188,45 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // For key-holders, atomically claim one use before calling the oracle.
+  // DECR is atomic, so two concurrent requests can't both win the last use.
+  let counterName = null;
+  let claimedRemaining = null;
+  if (session.role === "user") {
+    if (typeof session.key !== "string") {
+      res.status(401).json({ error: "invalid-session" });
+      return;
+    }
+    counterName = "oraclekeyuses:" + session.key;
+    try {
+      const exists = await redis("GET", "oraclekey:" + session.key);
+      if (!exists) {
+        res.status(401).json({ error: "invalid-session" });
+        return;
+      }
+      const remaining = await redis("DECR", counterName);
+      if (remaining < 0) {
+        await redis("INCR", counterName); // clamp back to 0
+        res.status(403).json({ error: "reading-used" });
+        return;
+      }
+      claimedRemaining = remaining;
+    } catch {
+      res.status(502).json({ error: "api-error" });
+      return;
+    }
+  }
+
   try {
     const reading = await callAPI(systemPrompt, userMessage);
     const result = { reading };
-    // Consume the free reading: reissue the user's token as "used"
-    if (session.role === "user") {
-      result.token = signToken({ role: "user", used: true, iat: Date.now() });
-    }
+    if (claimedRemaining !== null) result.remaining = claimedRemaining;
     res.status(200).json(result);
   } catch (err) {
+    // The oracle failed — give the use back so the attempt isn't wasted
+    if (claimedRemaining !== null) {
+      await redis("INCR", counterName).catch(() => {});
+    }
     if (err.message === "missing-key" || err.message === "bad-key") {
       res.status(502).json({ error: "oracle-unreachable" });
     } else {

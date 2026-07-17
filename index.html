@@ -407,6 +407,88 @@
     max-width: 24ch;
   }
 
+  /* ---------- admin: oracle keys ---------- */
+
+  .admin-keys {
+    max-width: 560px;
+    margin: 4rem auto 0;
+    text-align: center;
+  }
+  .admin-keys .rule { margin-bottom: 2rem; }
+  .forge-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .forge-row .label {
+    font-family: var(--display);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.26em;
+    font-size: 0.66rem;
+    color: var(--gold);
+  }
+  .forge-row input {
+    width: 84px;
+    text-align: center;
+  }
+  .new-key {
+    display: none;
+    margin: 1.5rem auto 0;
+    padding: 1.1rem 1.4rem 0.9rem;
+    max-width: 340px;
+    border: 1px solid var(--gold-hairline);
+    background: var(--gold-faint);
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+  .new-key:hover { border-color: var(--gold); }
+  .new-key .code {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.3rem;
+    letter-spacing: 0.26em;
+    color: var(--gold-bright);
+  }
+  .new-key .hint {
+    font-family: var(--display);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.6rem;
+    color: var(--parchment-dim);
+    margin-top: 0.4rem;
+  }
+  .key-list { margin-top: 2rem; text-align: left; }
+  .key-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.6rem 0.3rem;
+    border-bottom: 1px solid rgba(201, 169, 97, 0.1);
+    font-size: 0.88rem;
+  }
+  .key-row .key-code { letter-spacing: 0.16em; color: var(--parchment); }
+  .key-row .key-status {
+    font-family: var(--display);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.62rem;
+  }
+  .key-status.unspent { color: var(--gold-bright); }
+  .key-status.spent { color: var(--parchment-dim); }
+  .key-list .key-empty {
+    text-align: center;
+    font-style: italic;
+    color: var(--parchment-dim);
+    font-size: 0.85rem;
+  }
+
   /* ---------- forms ---------- */
 
   .form-head { padding-top: 4.5rem; text-align: center; }
@@ -645,7 +727,7 @@
     <div class="rule"></div>
     <p class="subtitle">The Hall of Celestial Divination</p>
     <div class="pw-box">
-      <input type="password" id="pw-input" placeholder="password" autocomplete="off"
+      <input type="password" id="pw-input" placeholder="password or oracle key" autocomplete="off"
              onkeydown="if(event.key==='Enter')checkPassword()">
       <button class="btn block" onclick="checkPassword()">Enter the Hall</button>
       <div class="error-text" id="pw-error"></div>
@@ -684,6 +766,25 @@
       <h3>Zi Wei Dou Shu</h3>
       <p>The imperial chart maps the twelve palaces of your destiny.</p>
     </div>
+  </div>
+
+  <div class="admin-keys" id="admin-keys" style="display:none">
+    <div class="rule"></div>
+    <div class="eyebrow">Oracle Keys</div>
+    <p class="subtitle">Forge keys for your seekers — each key carries a set number of readings.</p>
+    <div class="forge-row">
+      <label class="label" for="key-uses">Readings</label>
+      <input type="number" id="key-uses" value="1" min="1" max="99" inputmode="numeric">
+      <button class="btn" onclick="generateKey()">Forge a New Key</button>
+    </div>
+    <div class="new-key" id="new-key" role="button" tabindex="0"
+         onclick="copyNewKey()"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyNewKey()}">
+      <div class="code" id="new-key-code"></div>
+      <div class="hint" id="new-key-hint">Click to copy</div>
+    </div>
+    <div class="error-text" id="keys-error" style="text-align:center"></div>
+    <div class="key-list" id="key-list"></div>
   </div>
 </div>
 
@@ -869,10 +970,10 @@
     <div class="center-emblem hanzi">閉</div>
     <h1 class="title">The Oracle Rests</h1>
     <div class="rule"></div>
-    <p>You have used your free reading.<br>
-       Enter the admin password to continue.</p>
+    <p>Your key has granted all of its readings.<br>
+       Enter a fresh oracle key — or the admin password — to continue.</p>
     <div class="pw-box" style="margin:1.8rem auto 0">
-      <input type="password" id="lock-pw-input" placeholder="admin password" autocomplete="off"
+      <input type="password" id="lock-pw-input" placeholder="oracle key or admin password" autocomplete="off"
              onkeydown="if(event.key==='Enter')checkLockPassword()">
       <button class="btn block" onclick="checkLockPassword()">Unlock</button>
       <div class="error-text" id="lock-pw-error"></div>
@@ -934,46 +1035,49 @@ async function authenticate(password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password })
   });
-  if (response.status === 401) return null; // wrong password
-  if (!response.ok) throw new Error("auth-failed");
-  return response.json(); // { role, token }
+  const data = await response.json().catch(() => ({}));
+  if (response.ok) return data; // { role, token }
+  if (response.status === 401) return { error: data.error || "invalid-password" };
+  throw new Error("auth-failed");
+}
+
+function authErrorMessage(code) {
+  return code === "key-used"
+    ? "That key has already granted its reading."
+    : "The gate does not open. Try again.";
+}
+
+async function applyAuth(auth, inputEl, errEl) {
+  if (auth.error) {
+    errEl.textContent = authErrorMessage(auth.error);
+    return false;
+  }
+  setSession(
+    auth.role === "admin"
+      ? { role: "admin", token: auth.token }
+      : { role: "user", readingUsed: false, token: auth.token }
+  );
+  errEl.textContent = "";
+  inputEl.value = "";
+  showScreen("home");
+  return true;
 }
 
 async function checkPassword() {
-  const pw = document.getElementById("pw-input").value;
+  const inputEl = document.getElementById("pw-input");
   const errEl = document.getElementById("pw-error");
   try {
-    const auth = await authenticate(pw);
-    if (!auth) {
-      errEl.textContent = "The gate does not open. Try again.";
-      return;
-    }
-    setSession(
-      auth.role === "admin"
-        ? { role: "admin", token: auth.token }
-        : { role: "user", readingUsed: false, token: auth.token }
-    );
-    errEl.textContent = "";
-    document.getElementById("pw-input").value = "";
-    showScreen("home");
+    await applyAuth(await authenticate(inputEl.value), inputEl, errEl);
   } catch (e) {
     errEl.textContent = "Could not reach the gatekeeper. Try again.";
   }
 }
 
 async function checkLockPassword() {
-  const pw = document.getElementById("lock-pw-input").value;
+  const inputEl = document.getElementById("lock-pw-input");
   const errEl = document.getElementById("lock-pw-error");
   try {
-    const auth = await authenticate(pw);
-    if (!auth || auth.role !== "admin") {
-      errEl.textContent = "Incorrect admin password.";
-      return;
-    }
-    setSession({ role: "admin", token: auth.token });
-    errEl.textContent = "";
-    document.getElementById("lock-pw-input").value = "";
-    showScreen("home");
+    await applyAuth(await authenticate(inputEl.value), inputEl, errEl);
   } catch (e) {
     errEl.textContent = "Could not reach the gatekeeper. Try again.";
   }
@@ -1001,6 +1105,12 @@ function showScreen(name) {
   SCREENS.forEach(s => {
     document.getElementById("screen-" + s).classList.toggle("active", s === name);
   });
+  if (name === "home") {
+    const session = getSession();
+    const isAdmin = !!(session && session.role === "admin");
+    document.getElementById("admin-keys").style.display = isAdmin ? "block" : "none";
+    if (isAdmin) refreshKeyList();
+  }
   window.scrollTo(0, 0);
 }
 
@@ -1117,9 +1227,10 @@ async function startReading(request) {
     document.getElementById("result-content").innerHTML = renderMarkdown(data.reading);
     showScreen("result");
 
-    // The server reissues the user token marked as used
+    // Lock the UI only once the key's last use is spent
     if (session.role === "user") {
-      setSession({ role: "user", readingUsed: true, token: data.token || session.token });
+      const exhausted = typeof data.remaining === "number" ? data.remaining <= 0 : true;
+      setSession({ role: "user", readingUsed: exhausted, token: session.token });
     }
   } catch (err) {
     if (err.status === 401) { signOut(); return; } // invalid/expired session token
@@ -1217,6 +1328,83 @@ function renderMarkdown(md) {
   flushPara(); closeList();
   if (inCode) out.push("</pre>");
   return out.join("\n");
+}
+
+/* =========================================================
+   ORACLE KEYS (admin)
+   ========================================================= */
+async function keysApi(body) {
+  const session = getSession();
+  const response = await fetch("/api/keys", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: session && session.token, ...body })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data.error || "keys-error");
+    err.status = response.status;
+    throw err;
+  }
+  return data;
+}
+
+async function generateKey() {
+  const errEl = document.getElementById("keys-error");
+  const uses = Math.min(99, Math.max(1, parseInt(document.getElementById("key-uses").value, 10) || 1));
+  try {
+    const data = await keysApi({ action: "generate", uses });
+    errEl.textContent = "";
+    const box = document.getElementById("new-key");
+    box.style.display = "block";
+    document.getElementById("new-key-code").textContent = data.key;
+    document.getElementById("new-key-hint").textContent =
+      "Click to copy · " + (data.total === 1 ? "1 reading" : data.total + " readings");
+    refreshKeyList();
+  } catch (e) {
+    if (e.status === 401) { signOut(); return; }
+    errEl.textContent = "The forge is cold — check that the key store is configured.";
+  }
+}
+
+function copyNewKey() {
+  const code = document.getElementById("new-key-code").textContent;
+  if (!code) return;
+  navigator.clipboard.writeText(code).then(() => {
+    document.getElementById("new-key-hint").textContent = "Copied";
+  }).catch(() => {});
+}
+
+async function refreshKeyList() {
+  const list = document.getElementById("key-list");
+  try {
+    const data = await keysApi({ action: "list" });
+    list.innerHTML = "";
+    if (!data.keys.length) {
+      const empty = document.createElement("div");
+      empty.className = "key-empty";
+      empty.textContent = "No keys forged yet.";
+      list.append(empty);
+      return;
+    }
+    for (const k of data.keys) {
+      const row = document.createElement("div");
+      row.className = "key-row";
+      const code = document.createElement("span");
+      code.className = "key-code";
+      code.textContent = k.key;
+      const status = document.createElement("span");
+      const spent = k.remaining <= 0;
+      status.className = "key-status " + (spent ? "spent" : "unspent");
+      status.textContent = spent ? "spent"
+        : k.total === 1 ? "unspent"
+        : k.remaining + " of " + k.total + " left";
+      row.append(code, status);
+      list.append(row);
+    }
+  } catch (e) {
+    /* leave the list as-is; generate shows configuration errors */
+  }
 }
 
 /* =========================================================
