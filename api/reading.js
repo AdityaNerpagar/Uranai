@@ -28,9 +28,10 @@ Format your response in Markdown with headings.`,
 
   bazi: `You are a master of Ba Zi (八字), the Four Pillars of Destiny.
 
-Provide a reading focused only on the user's requested area (or all five if none specified).
 Do NOT show any pillar calculations, stems, branches, or technical workings.
-Output only insights in plain flowing prose under these headings as relevant:
+Output only insights in plain flowing prose under Markdown headings.
+
+For a Full Reading, cover all five areas:
 
 - Personality & Inner Nature
 - Career & Vocation
@@ -38,10 +39,12 @@ Output only insights in plain flowing prose under these headings as relevant:
 - Wealth & Financial Luck
 - Health & Vitality
 
-Keep each section concise (3-5 sentences). Close with one sentence on the person's
-overall elemental theme and what season/energy favors them.
+If the seeker names ONE focus area, your reading must contain ONLY that single
+section — one heading, one section of prose. Do not mention, summarise, or
+touch on any of the other four areas at all.
 
-Format your response in Markdown with headings.`,
+Keep each section concise (3-5 sentences). Close with one sentence on the person's
+overall elemental theme and what season/energy favors them.`,
 
   ziwei: `You are a grandmaster of Zi Wei Dou Shu (紫微斗數), the imperial star astrology of China.
 
@@ -72,13 +75,25 @@ function buildUserMessage(method, fields) {
       : "I come with an open mind and no specific question. Please cast a hexagram and share what the oracle reveals.";
   }
   if (method === "bazi") {
+    const FOCUS_SECTIONS = {
+      "Personality": "Personality & Inner Nature",
+      "Career": "Career & Vocation",
+      "Relationships": "Relationships & Love",
+      "Wealth": "Wealth & Financial Luck",
+      "Health": "Health & Vitality"
+    };
+    const focusSection = FOCUS_SECTIONS[field(fields, "focus")];
     return (
       `Please give me a Ba Zi reading.\n` +
       `Date of birth: ${field(fields, "date") || "unknown"}\n` +
       `Time of birth: ${field(fields, "time") || "unknown"}\n` +
       `Place of birth: ${field(fields, "place") || "unknown"}\n` +
       `Gender: ${field(fields, "gender")}\n` +
-      `Focus area: ${field(fields, "focus")}`
+      (focusSection
+        ? `\nI want a reading for ONE area only: ${focusSection}.\n` +
+          `Write ONLY the "${focusSection}" section and the closing elemental-theme ` +
+          `sentence. Do not include any other section or heading.`
+        : `Focus area: Full Reading — cover all five areas.`)
     );
   }
   if (method === "ziwei") {
