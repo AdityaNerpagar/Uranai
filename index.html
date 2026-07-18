@@ -20,9 +20,9 @@
     --parchment-dim: #97917f;
     --cinnabar: #b5432c;
     --danger: #c76a55;
-    --display: "Cormorant Garamond", Georgia, serif;
-    --body: "Spectral", Georgia, serif;
-    --hanzi: "Kaiti SC", "KaiTi", "STKaiti", "BiauKai", "DFKai-SB", serif;
+    --display: "Cormorant Garamond", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+    --body: "Spectral", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+    --hanzi: "Kaiti SC", "KaiTi", "STKaiti", "BiauKai", "DFKai-SB", "Hiragino Mincho ProN", serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -407,36 +407,6 @@
     max-width: 24ch;
   }
 
-  /* ---------- ask-the-oracle banner card ---------- */
-
-  .ask-card {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    justify-content: flex-start;
-    text-align: left;
-    min-height: 0;
-    gap: 1.8rem;
-    padding: 1.7rem 2.2rem;
-  }
-  .ask-card .scroll-hanzi {
-    writing-mode: horizontal-tb;
-    flex: 0 0 auto;
-    min-height: 0;
-    font-size: 2.7rem;
-  }
-  .ask-card .card-eyebrow { margin-bottom: 0.4rem; text-indent: 0; }
-  .ask-card h3 { margin: 0 0 0.3rem; }
-  .ask-card p { max-width: none; }
-  @media (max-width: 680px) {
-    .ask-card {
-      flex-direction: column;
-      text-align: center;
-      gap: 0.6rem;
-      padding: 1.6rem 1.2rem;
-    }
-    .ask-card .card-eyebrow { text-indent: 0.3em; }
-  }
-
   /* ---------- admin: oracle keys ---------- */
 
   .admin-keys {
@@ -723,10 +693,11 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 
 <!-- ============ TOP BAR ============ -->
-<div id="topbar">
-  <span id="admin-badge" class="badge-admin" style="display:none"><span class="hanzi">御</span>Admin</span>
+<div id="topbar" class="visible">
+  <span id="admin-badge" class="badge-admin" style="display:none"><span class="hanzi">御</span><span data-i18n="badge.admin">Admin</span></span>
   <span style="flex:1"></span>
-  <button class="btn-quiet" onclick="signOut()">Sign Out</button>
+  <button class="btn-quiet" id="lang-toggle" onclick="toggleLanguage()">日本語</button>
+  <button class="btn-quiet" id="signout-btn" onclick="signOut()" data-i18n="common.signout">Sign Out</button>
 </div>
 
 <!-- ============ PASSWORD GATE ============ -->
@@ -755,11 +726,11 @@
     <div class="gate-emblem hanzi">占</div>
     <h1 class="title">Uranai</h1>
     <div class="rule"></div>
-    <p class="subtitle">The Hall of Celestial Divination</p>
-    <div class="pw-box">
+    <p class="subtitle" data-i18n="gate.subtitle">The Hall of Celestial Divination</p>
+    <div class="pw-box" id="gate-pw-box">
       <input type="password" id="pw-input" placeholder="password or oracle key" autocomplete="off"
-             onkeydown="if(event.key==='Enter')checkPassword()">
-      <button class="btn block" onclick="checkPassword()">Enter the Hall</button>
+             data-i18n-ph="gate.ph" onkeydown="if(event.key==='Enter')checkPassword()">
+      <button class="btn block" onclick="checkPassword()" data-i18n="gate.enter">Enter the Hall</button>
       <div class="error-text" id="pw-error"></div>
     </div>
   </div>
@@ -771,50 +742,41 @@
     <div class="hall-emblem hanzi">占</div>
     <h1 class="title">Uranai</h1>
     <div class="rule"></div>
-    <p class="subtitle">Three ancient paths cross the night sky — or bring your question straight to the oracle.</p>
+    <p class="subtitle" data-i18n="home.subtitle">Three paths cross the night sky. Choose the one that calls to you.</p>
   </div>
 
   <div class="cards">
     <div class="method-card" role="button" tabindex="0" onclick="openForm('iching')"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('iching')}">
-      <div class="card-eyebrow">Book of Changes</div>
+      <div class="card-eyebrow" data-i18n="card.iching.eyebrow">Book of Changes</div>
       <div class="scroll-hanzi">易經</div>
-      <h3>I Ching</h3>
-      <p>Cast the hexagram and hear the oracle's counsel on your question.</p>
+      <h3 data-i18n="card.iching.title">I Ching</h3>
+      <p data-i18n="card.iching.desc">Cast the hexagram and hear the oracle's counsel on your question.</p>
     </div>
     <div class="method-card" role="button" tabindex="0" onclick="openForm('bazi')"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('bazi')}">
-      <div class="card-eyebrow">Four Pillars of Destiny</div>
+      <div class="card-eyebrow" data-i18n="card.bazi.eyebrow">Four Pillars of Destiny</div>
       <div class="scroll-hanzi">八字</div>
-      <h3>Ba Zi</h3>
-      <p>The hour of your birth holds the elemental currents of your fate.</p>
+      <h3 data-i18n="card.bazi.title">Ba Zi</h3>
+      <p data-i18n="card.bazi.desc">The hour of your birth holds the elemental currents of your fate.</p>
     </div>
     <div class="method-card" role="button" tabindex="0" onclick="openForm('ziwei')"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('ziwei')}">
-      <div class="card-eyebrow">Purple Star Astrology</div>
+      <div class="card-eyebrow" data-i18n="card.ziwei.eyebrow">Purple Star Astrology</div>
       <div class="scroll-hanzi long">紫微斗數</div>
-      <h3>Zi Wei Dou Shu</h3>
-      <p>The imperial chart maps the twelve palaces of your destiny.</p>
-    </div>
-    <div class="method-card ask-card" role="button" tabindex="0" onclick="openForm('ask')"
-         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('ask')}">
-      <div class="scroll-hanzi">問</div>
-      <div>
-        <div class="card-eyebrow">Direct Counsel</div>
-        <h3>Ask the Oracle</h3>
-        <p>No casting, no charts — bring any question directly before the oracle.</p>
-      </div>
+      <h3 data-i18n="card.ziwei.title">Zi Wei Dou Shu</h3>
+      <p data-i18n="card.ziwei.desc">The imperial chart maps the twelve palaces of your destiny.</p>
     </div>
   </div>
 
   <div class="admin-keys" id="admin-keys" style="display:none">
     <div class="rule"></div>
-    <div class="eyebrow">Oracle Keys</div>
-    <p class="subtitle">Forge keys for your seekers — each key carries a set number of readings.</p>
+    <div class="eyebrow" data-i18n="keys.eyebrow">Oracle Keys</div>
+    <p class="subtitle" data-i18n="keys.subtitle">Forge keys for your seekers — each key carries a set number of readings.</p>
     <div class="forge-row">
-      <label class="label" for="key-uses">Readings</label>
+      <label class="label" for="key-uses" data-i18n="keys.readings">Readings</label>
       <input type="number" id="key-uses" value="1" min="1" max="99" inputmode="numeric">
-      <button class="btn" onclick="generateKey()">Forge a New Key</button>
+      <button class="btn" onclick="generateKey()" data-i18n="keys.forge">Forge a New Key</button>
     </div>
     <div class="new-key" id="new-key" role="button" tabindex="0"
          onclick="copyNewKey()"
@@ -830,87 +792,66 @@
 <!-- ============ I CHING FORM ============ -->
 <div id="screen-form-iching" class="screen">
   <div class="form-head">
-    <button class="btn-quiet back-link" onclick="showScreen('home')">← The Hall</button>
+    <button class="btn-quiet back-link" onclick="showScreen('home')" data-i18n="common.back">← The Hall</button>
     <div class="form-hanzi">易經</div>
-    <h1 class="title">I Ching</h1>
+    <h1 class="title" data-i18n="title.iching">I Ching</h1>
     <div class="rule"></div>
-    <p class="subtitle">Hold your question in your mind, then consult the oracle.</p>
+    <p class="subtitle" data-i18n="form.iching.subtitle">Hold your question in your mind, then consult the oracle.</p>
   </div>
   <div class="form-panel">
     <div class="field">
-      <label class="label" for="iching-question">Your question — or leave blank for an open reading</label>
-      <textarea id="iching-question" maxlength="1000" placeholder="What guidance do you seek?"></textarea>
+      <label class="label" for="iching-question" data-i18n="form.iching.label">Your question — or leave blank for an open reading</label>
+      <textarea id="iching-question" maxlength="1000" placeholder="What guidance do you seek?" data-i18n-ph="form.iching.ph"></textarea>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="submitIChing()">Consult the Oracle</button>
+      <button class="btn" onclick="submitIChing()" data-i18n="common.consult">Consult the Oracle</button>
     </div>
-  </div>
-</div>
-
-<!-- ============ ASK FORM ============ -->
-<div id="screen-form-ask" class="screen">
-  <div class="form-head">
-    <button class="btn-quiet back-link" onclick="showScreen('home')">← The Hall</button>
-    <div class="form-hanzi">問</div>
-    <h1 class="title">Ask the Oracle</h1>
-    <div class="rule"></div>
-    <p class="subtitle">Speak plainly — the oracle listens.</p>
-  </div>
-  <div class="form-panel">
-    <div class="field">
-      <label class="label" for="ask-question">Your question</label>
-      <textarea id="ask-question" maxlength="1500" placeholder="What weighs on your mind?"></textarea>
-    </div>
-    <div class="form-actions">
-      <button class="btn" onclick="submitAsk()">Consult the Oracle</button>
-    </div>
-    <div class="error-text" id="ask-form-error" style="text-align:center"></div>
   </div>
 </div>
 
 <!-- ============ BA ZI FORM ============ -->
 <div id="screen-form-bazi" class="screen">
   <div class="form-head">
-    <button class="btn-quiet back-link" onclick="showScreen('home')">← The Hall</button>
+    <button class="btn-quiet back-link" onclick="showScreen('home')" data-i18n="common.back">← The Hall</button>
     <div class="form-hanzi">八字</div>
-    <h1 class="title">Ba Zi</h1>
+    <h1 class="title" data-i18n="title.bazi">Ba Zi</h1>
     <div class="rule"></div>
-    <p class="subtitle">The Four Pillars of Destiny</p>
+    <p class="subtitle" data-i18n="form.bazi.subtitle">The Four Pillars of Destiny</p>
   </div>
   <div class="form-panel">
     <div class="field">
-      <label class="label" for="bazi-date">Date of birth</label>
+      <label class="label" for="bazi-date" data-i18n="form.date">Date of birth</label>
       <input type="date" id="bazi-date">
     </div>
     <div class="field">
-      <label class="label" for="bazi-time">Time of birth</label>
+      <label class="label" for="bazi-time" data-i18n="form.bazi.time">Time of birth</label>
       <input type="time" id="bazi-time">
     </div>
     <div class="field">
-      <label class="label" for="bazi-place">Place of birth</label>
-      <input type="text" id="bazi-place" placeholder="City, Country">
+      <label class="label" for="bazi-place" data-i18n="form.bazi.place">Place of birth</label>
+      <input type="text" id="bazi-place" placeholder="City, Country" data-i18n-ph="form.bazi.placePh">
     </div>
     <div class="field">
-      <label class="label" for="bazi-gender">Gender</label>
+      <label class="label" for="bazi-gender" data-i18n="form.gender">Gender</label>
       <select id="bazi-gender">
-        <option>Male</option>
-        <option>Female</option>
-        <option>Other</option>
+        <option value="Male" data-i18n="opt.male">Male</option>
+        <option value="Female" data-i18n="opt.female">Female</option>
+        <option value="Other" data-i18n="opt.other">Other</option>
       </select>
     </div>
     <div class="field">
-      <label class="label" for="bazi-focus">Focus area</label>
+      <label class="label" for="bazi-focus" data-i18n="form.bazi.focus">Focus area</label>
       <select id="bazi-focus">
-        <option>Full Reading</option>
-        <option>Personality</option>
-        <option>Career</option>
-        <option>Relationships</option>
-        <option>Wealth</option>
-        <option>Health</option>
+        <option value="Full Reading" data-i18n="opt.focus.full">Full Reading</option>
+        <option value="Personality" data-i18n="opt.focus.personality">Personality</option>
+        <option value="Career" data-i18n="opt.focus.career">Career</option>
+        <option value="Relationships" data-i18n="opt.focus.relationships">Relationships</option>
+        <option value="Wealth" data-i18n="opt.focus.wealth">Wealth</option>
+        <option value="Health" data-i18n="opt.focus.health">Health</option>
       </select>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="submitBaZi()">Consult the Oracle</button>
+      <button class="btn" onclick="submitBaZi()" data-i18n="common.consult">Consult the Oracle</button>
     </div>
     <div class="error-text" id="bazi-form-error" style="text-align:center"></div>
   </div>
@@ -919,61 +860,61 @@
 <!-- ============ ZI WEI FORM ============ -->
 <div id="screen-form-ziwei" class="screen">
   <div class="form-head">
-    <button class="btn-quiet back-link" onclick="showScreen('home')">← The Hall</button>
+    <button class="btn-quiet back-link" onclick="showScreen('home')" data-i18n="common.back">← The Hall</button>
     <div class="form-hanzi">紫微斗數</div>
-    <h1 class="title">Zi Wei Dou Shu</h1>
+    <h1 class="title" data-i18n="title.ziwei">Zi Wei Dou Shu</h1>
     <div class="rule"></div>
-    <p class="subtitle">Imperial Purple Star Astrology</p>
+    <p class="subtitle" data-i18n="form.ziwei.subtitle">Imperial Purple Star Astrology</p>
   </div>
   <div class="form-panel">
     <div class="field">
-      <label class="label" for="ziwei-date">Date of birth</label>
+      <label class="label" for="ziwei-date" data-i18n="form.date">Date of birth</label>
       <input type="date" id="ziwei-date">
     </div>
     <div class="field">
-      <label class="label" for="ziwei-hour">Birth hour</label>
+      <label class="label" for="ziwei-hour" data-i18n="form.ziwei.hour">Birth hour</label>
       <select id="ziwei-hour">
-        <option>Zi 子 (11pm–1am)</option>
-        <option>Chou 丑 (1–3am)</option>
-        <option>Yin 寅 (3–5am)</option>
-        <option>Mao 卯 (5–7am)</option>
-        <option>Chen 辰 (7–9am)</option>
-        <option>Si 巳 (9–11am)</option>
-        <option>Wu 午 (11am–1pm)</option>
-        <option>Wei 未 (1–3pm)</option>
-        <option>Shen 申 (3–5pm)</option>
-        <option>You 酉 (5–7pm)</option>
-        <option>Xu 戌 (7–9pm)</option>
-        <option>Hai 亥 (9–11pm)</option>
+        <option value="Zi 子 (11pm–1am)" data-i18n="opt.hour.zi">Zi 子 (11pm–1am)</option>
+        <option value="Chou 丑 (1–3am)" data-i18n="opt.hour.chou">Chou 丑 (1–3am)</option>
+        <option value="Yin 寅 (3–5am)" data-i18n="opt.hour.yin">Yin 寅 (3–5am)</option>
+        <option value="Mao 卯 (5–7am)" data-i18n="opt.hour.mao">Mao 卯 (5–7am)</option>
+        <option value="Chen 辰 (7–9am)" data-i18n="opt.hour.chen">Chen 辰 (7–9am)</option>
+        <option value="Si 巳 (9–11am)" data-i18n="opt.hour.si">Si 巳 (9–11am)</option>
+        <option value="Wu 午 (11am–1pm)" data-i18n="opt.hour.wu">Wu 午 (11am–1pm)</option>
+        <option value="Wei 未 (1–3pm)" data-i18n="opt.hour.wei">Wei 未 (1–3pm)</option>
+        <option value="Shen 申 (3–5pm)" data-i18n="opt.hour.shen">Shen 申 (3–5pm)</option>
+        <option value="You 酉 (5–7pm)" data-i18n="opt.hour.you">You 酉 (5–7pm)</option>
+        <option value="Xu 戌 (7–9pm)" data-i18n="opt.hour.xu">Xu 戌 (7–9pm)</option>
+        <option value="Hai 亥 (9–11pm)" data-i18n="opt.hour.hai">Hai 亥 (9–11pm)</option>
       </select>
     </div>
     <div class="field">
-      <label class="label" for="ziwei-gender">Gender</label>
+      <label class="label" for="ziwei-gender" data-i18n="form.gender">Gender</label>
       <select id="ziwei-gender">
-        <option>Male</option>
-        <option>Female</option>
+        <option value="Male" data-i18n="opt.male">Male</option>
+        <option value="Female" data-i18n="opt.female">Female</option>
       </select>
     </div>
     <div class="field">
-      <label class="label" for="ziwei-palace">Palace of interest</label>
+      <label class="label" for="ziwei-palace" data-i18n="form.ziwei.palace">Palace of interest</label>
       <select id="ziwei-palace">
-        <option>All Palaces</option>
-        <option>Ming 命 — Life & Destiny</option>
-        <option>Fu Qi 夫妻 — Marriage</option>
-        <option>Cai Bo 財帛 — Wealth</option>
-        <option>Guan Lu 官祿 — Career</option>
-        <option>Ji E 疾厄 — Health</option>
-        <option>Xiong Di 兄弟 — Siblings</option>
-        <option>Zi Nu 子女 — Children</option>
-        <option>Qian Yi 遷移 — Travel</option>
-        <option>Pu Yi 僕役 — Friends</option>
-        <option>Tian Zhai 田宅 — Property</option>
-        <option>Fu De 福德 — Spiritual Fortune</option>
-        <option>Fu Mu 父母 — Parents</option>
+        <option value="All Palaces" data-i18n="opt.palace.all">All Palaces</option>
+        <option value="Ming 命 — Life &amp; Destiny" data-i18n="opt.palace.ming">Ming 命 — Life &amp; Destiny</option>
+        <option value="Fu Qi 夫妻 — Marriage" data-i18n="opt.palace.fuqi">Fu Qi 夫妻 — Marriage</option>
+        <option value="Cai Bo 財帛 — Wealth" data-i18n="opt.palace.caibo">Cai Bo 財帛 — Wealth</option>
+        <option value="Guan Lu 官祿 — Career" data-i18n="opt.palace.guanlu">Guan Lu 官祿 — Career</option>
+        <option value="Ji E 疾厄 — Health" data-i18n="opt.palace.jie">Ji E 疾厄 — Health</option>
+        <option value="Xiong Di 兄弟 — Siblings" data-i18n="opt.palace.xiongdi">Xiong Di 兄弟 — Siblings</option>
+        <option value="Zi Nu 子女 — Children" data-i18n="opt.palace.zinu">Zi Nu 子女 — Children</option>
+        <option value="Qian Yi 遷移 — Travel" data-i18n="opt.palace.qianyi">Qian Yi 遷移 — Travel</option>
+        <option value="Pu Yi 僕役 — Friends" data-i18n="opt.palace.puyi">Pu Yi 僕役 — Friends</option>
+        <option value="Tian Zhai 田宅 — Property" data-i18n="opt.palace.tianzhai">Tian Zhai 田宅 — Property</option>
+        <option value="Fu De 福德 — Spiritual Fortune" data-i18n="opt.palace.fude">Fu De 福德 — Spiritual Fortune</option>
+        <option value="Fu Mu 父母 — Parents" data-i18n="opt.palace.fumu">Fu Mu 父母 — Parents</option>
       </select>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="submitZiWei()">Consult the Oracle</button>
+      <button class="btn" onclick="submitZiWei()" data-i18n="common.consult">Consult the Oracle</button>
     </div>
     <div class="error-text" id="ziwei-form-error" style="text-align:center"></div>
   </div>
@@ -1002,7 +943,7 @@
       </svg>
     </div>
     <div class="pulse-symbol" id="loading-symbol">卜</div>
-    <p class="loading-text">The heavens are being read…</p>
+    <p class="loading-text" data-i18n="loading.text">The heavens are being read…</p>
   </div>
 </div>
 
@@ -1017,10 +958,10 @@
     <div class="reading" id="result-content"></div>
     <div class="seal" aria-hidden="true">占</div>
   </div>
-  <p class="disclaimer">This reading is offered for reflection and entertainment.
+  <p class="disclaimer" data-i18n="result.disclaimer">This reading is offered for reflection and entertainment.
      The oracle illuminates paths — the walking is yours alone.</p>
   <div style="text-align:center; margin-top:2rem">
-    <button class="btn" id="new-reading-btn" onclick="newReading()">New Reading</button>
+    <button class="btn" id="new-reading-btn" onclick="newReading()" data-i18n="common.newReading">New Reading</button>
   </div>
 </div>
 
@@ -1028,14 +969,14 @@
 <div id="screen-lock" class="screen">
   <div class="center-panel">
     <div class="center-emblem hanzi">閉</div>
-    <h1 class="title">The Oracle Rests</h1>
+    <h1 class="title" data-i18n="lock.title">The Oracle Rests</h1>
     <div class="rule"></div>
-    <p>Your key has granted all of its readings.<br>
+    <p data-i18n="lock.body">Your key has granted all of its readings.
        Enter a fresh oracle key — or the admin password — to continue.</p>
     <div class="pw-box" style="margin:1.8rem auto 0">
       <input type="password" id="lock-pw-input" placeholder="oracle key or admin password" autocomplete="off"
-             onkeydown="if(event.key==='Enter')checkLockPassword()">
-      <button class="btn block" onclick="checkLockPassword()">Unlock</button>
+             data-i18n-ph="lock.ph" onkeydown="if(event.key==='Enter')checkLockPassword()">
+      <button class="btn block" onclick="checkLockPassword()" data-i18n="common.unlock">Unlock</button>
       <div class="error-text" id="lock-pw-error"></div>
     </div>
   </div>
@@ -1045,19 +986,229 @@
 <div id="screen-error" class="screen">
   <div class="center-panel">
     <div class="center-emblem hanzi">凶</div>
-    <h1 class="title">The Oracle Is Silent</h1>
+    <h1 class="title" data-i18n="error.title">The Oracle Is Silent</h1>
     <div class="rule"></div>
     <p id="error-message">Something went wrong.</p>
     <div style="margin-top:1.8rem">
-      <button class="btn" onclick="retryReading()">Retry</button>
+      <button class="btn" onclick="retryReading()" data-i18n="common.retry">Retry</button>
       <div style="margin-top:1rem">
-        <button class="btn-quiet" onclick="showScreen('home')">Return to the Hall</button>
+        <button class="btn-quiet" onclick="showScreen('home')" data-i18n="common.returnHall">Return to the Hall</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+/* =========================================================
+   LANGUAGE
+   ========================================================= */
+const LANG_KEY = "uranai-lang";
+
+const I18N = {
+  en: {
+    "badge.admin": "Admin",
+    "common.signout": "Sign Out",
+    "common.back": "← The Hall",
+    "common.consult": "Consult the Oracle",
+    "common.retry": "Retry",
+    "common.returnHall": "Return to the Hall",
+    "common.newReading": "New Reading",
+    "common.unlock": "Unlock",
+    "gate.subtitle": "The Hall of Celestial Divination",
+    "gate.ph": "password or oracle key",
+    "gate.enter": "Enter the Hall",
+    "home.subtitle": "Three paths cross the night sky. Choose the one that calls to you.",
+    "card.iching.eyebrow": "Book of Changes",
+    "card.iching.title": "I Ching",
+    "card.iching.desc": "Cast the hexagram and hear the oracle's counsel on your question.",
+    "card.bazi.eyebrow": "Four Pillars of Destiny",
+    "card.bazi.title": "Ba Zi",
+    "card.bazi.desc": "The hour of your birth holds the elemental currents of your fate.",
+    "card.ziwei.eyebrow": "Purple Star Astrology",
+    "card.ziwei.title": "Zi Wei Dou Shu",
+    "card.ziwei.desc": "The imperial chart maps the twelve palaces of your destiny.",
+    "keys.eyebrow": "Oracle Keys",
+    "keys.subtitle": "Forge keys for your seekers — each key carries a set number of readings.",
+    "keys.readings": "Readings",
+    "keys.forge": "Forge a New Key",
+    "keys.copy": "Click to copy",
+    "keys.copied": "Copied",
+    "keys.empty": "No keys forged yet.",
+    "keys.forgeError": "The forge is cold — check that the key store is configured.",
+    "keys.unspent": "unspent",
+    "keys.spent": "spent",
+    "title.iching": "I Ching",
+    "title.bazi": "Ba Zi",
+    "title.ziwei": "Zi Wei Dou Shu",
+    "form.date": "Date of birth",
+    "form.gender": "Gender",
+    "form.iching.subtitle": "Hold your question in your mind, then consult the oracle.",
+    "form.iching.label": "Your question — or leave blank for an open reading",
+    "form.iching.ph": "What guidance do you seek?",
+    "form.bazi.subtitle": "The Four Pillars of Destiny",
+    "form.bazi.time": "Time of birth",
+    "form.bazi.place": "Place of birth",
+    "form.bazi.placePh": "City, Country",
+    "form.bazi.focus": "Focus area",
+    "opt.male": "Male", "opt.female": "Female", "opt.other": "Other",
+    "opt.focus.full": "Full Reading", "opt.focus.personality": "Personality",
+    "opt.focus.career": "Career", "opt.focus.relationships": "Relationships",
+    "opt.focus.wealth": "Wealth", "opt.focus.health": "Health",
+    "form.ziwei.subtitle": "Imperial Purple Star Astrology",
+    "form.ziwei.hour": "Birth hour",
+    "form.ziwei.palace": "Palace of interest",
+    "opt.hour.zi": "Zi 子 (11pm–1am)", "opt.hour.chou": "Chou 丑 (1–3am)",
+    "opt.hour.yin": "Yin 寅 (3–5am)", "opt.hour.mao": "Mao 卯 (5–7am)",
+    "opt.hour.chen": "Chen 辰 (7–9am)", "opt.hour.si": "Si 巳 (9–11am)",
+    "opt.hour.wu": "Wu 午 (11am–1pm)", "opt.hour.wei": "Wei 未 (1–3pm)",
+    "opt.hour.shen": "Shen 申 (3–5pm)", "opt.hour.you": "You 酉 (5–7pm)",
+    "opt.hour.xu": "Xu 戌 (7–9pm)", "opt.hour.hai": "Hai 亥 (9–11pm)",
+    "opt.palace.all": "All Palaces", "opt.palace.ming": "Ming 命 — Life & Destiny",
+    "opt.palace.fuqi": "Fu Qi 夫妻 — Marriage", "opt.palace.caibo": "Cai Bo 財帛 — Wealth",
+    "opt.palace.guanlu": "Guan Lu 官祿 — Career", "opt.palace.jie": "Ji E 疾厄 — Health",
+    "opt.palace.xiongdi": "Xiong Di 兄弟 — Siblings", "opt.palace.zinu": "Zi Nu 子女 — Children",
+    "opt.palace.qianyi": "Qian Yi 遷移 — Travel", "opt.palace.puyi": "Pu Yi 僕役 — Friends",
+    "opt.palace.tianzhai": "Tian Zhai 田宅 — Property", "opt.palace.fude": "Fu De 福德 — Spiritual Fortune",
+    "opt.palace.fumu": "Fu Mu 父母 — Parents",
+    "loading.text": "The heavens are being read…",
+    "result.iching": "The Oracle Speaks",
+    "result.bazi": "Your Four Pillars",
+    "result.ziwei": "Your Star Chart",
+    "result.disclaimer": "This reading is offered for reflection and entertainment. The oracle illuminates paths — the walking is yours alone.",
+    "lock.title": "The Oracle Rests",
+    "lock.body": "Your key has granted all of its readings. Enter a fresh oracle key — or the admin password — to continue.",
+    "lock.ph": "oracle key or admin password",
+    "error.title": "The Oracle Is Silent",
+    "err.gate": "The gate does not open. Try again.",
+    "err.keyUsed": "That key has already granted its readings.",
+    "err.rateAuth": "Too many attempts. Let the incense burn a moment, then try again.",
+    "err.gatekeeper": "Could not reach the gatekeeper. Try again.",
+    "err.needDate": "Please enter your date of birth.",
+    "err.rateReading": "The oracle must rest between consultations. Return in a minute.",
+    "err.unreachable": "Oracle is unreachable — check your API key.",
+    "err.generic": "The connection to the oracle was disturbed. Please try again."
+  },
+  ja: {
+    "badge.admin": "管理者",
+    "common.signout": "サインアウト",
+    "common.back": "← 殿へ戻る",
+    "common.consult": "神託を乞う",
+    "common.retry": "再試行",
+    "common.returnHall": "殿へ戻る",
+    "common.newReading": "新しい占い",
+    "common.unlock": "解錠する",
+    "gate.subtitle": "天命占いの殿堂",
+    "gate.ph": "パスワードまたは神託の鍵",
+    "gate.enter": "入殿する",
+    "home.subtitle": "夜空に交わる三つの古の道。心に呼びかける道をお選びください。",
+    "card.iching.eyebrow": "変化の書",
+    "card.iching.title": "易経",
+    "card.iching.desc": "卦を立て、あなたの問いへの神託の導きを聞く。",
+    "card.bazi.eyebrow": "生辰八字",
+    "card.bazi.title": "四柱推命",
+    "card.bazi.desc": "生まれた刻に、運命をめぐる五行の流れが宿る。",
+    "card.ziwei.eyebrow": "帝王の星占",
+    "card.ziwei.title": "紫微斗数",
+    "card.ziwei.desc": "帝の星図が、宿命の十二宮を描き出す。",
+    "keys.eyebrow": "神託の鍵",
+    "keys.subtitle": "求道者のための鍵を鍛える — 鍵ごとに占いの回数を定めます。",
+    "keys.readings": "回数",
+    "keys.forge": "新しい鍵を鍛える",
+    "keys.copy": "クリックしてコピー",
+    "keys.copied": "コピーしました",
+    "keys.empty": "まだ鍵は鍛えられていません。",
+    "keys.forgeError": "鍛冶場が冷えています — 鍵の保管庫の設定をご確認ください。",
+    "keys.unspent": "未使用",
+    "keys.spent": "使用済",
+    "title.iching": "易経",
+    "title.bazi": "四柱推命",
+    "title.ziwei": "紫微斗数",
+    "form.date": "生年月日",
+    "form.gender": "性別",
+    "form.iching.subtitle": "問いを心に抱き、神託に伺いを立てましょう。",
+    "form.iching.label": "あなたの問い — 空欄なら開かれた占いに",
+    "form.iching.ph": "どのような導きをお求めですか？",
+    "form.bazi.subtitle": "四柱推命 — 生辰八字",
+    "form.bazi.time": "生まれた時刻",
+    "form.bazi.place": "出生地",
+    "form.bazi.placePh": "都市、国",
+    "form.bazi.focus": "占う分野",
+    "opt.male": "男性", "opt.female": "女性", "opt.other": "その他",
+    "opt.focus.full": "総合運", "opt.focus.personality": "性格",
+    "opt.focus.career": "仕事運", "opt.focus.relationships": "恋愛・人間関係",
+    "opt.focus.wealth": "金運", "opt.focus.health": "健康運",
+    "form.ziwei.subtitle": "帝王の紫微斗数",
+    "form.ziwei.hour": "生まれた刻",
+    "form.ziwei.palace": "占いたい宮",
+    "opt.hour.zi": "子の刻（23時〜1時）", "opt.hour.chou": "丑の刻（1〜3時）",
+    "opt.hour.yin": "寅の刻（3〜5時）", "opt.hour.mao": "卯の刻（5〜7時）",
+    "opt.hour.chen": "辰の刻（7〜9時）", "opt.hour.si": "巳の刻（9〜11時）",
+    "opt.hour.wu": "午の刻（11〜13時）", "opt.hour.wei": "未の刻（13〜15時）",
+    "opt.hour.shen": "申の刻（15〜17時）", "opt.hour.you": "酉の刻（17〜19時）",
+    "opt.hour.xu": "戌の刻（19〜21時）", "opt.hour.hai": "亥の刻（21〜23時）",
+    "opt.palace.all": "全宮", "opt.palace.ming": "命宮 — 運命",
+    "opt.palace.fuqi": "夫妻宮 — 結婚", "opt.palace.caibo": "財帛宮 — 財運",
+    "opt.palace.guanlu": "官禄宮 — 仕事", "opt.palace.jie": "疾厄宮 — 健康",
+    "opt.palace.xiongdi": "兄弟宮 — 兄弟姉妹", "opt.palace.zinu": "子女宮 — 子ども",
+    "opt.palace.qianyi": "遷移宮 — 旅・移動", "opt.palace.puyi": "僕役宮 — 友人",
+    "opt.palace.tianzhai": "田宅宮 — 不動産", "opt.palace.fude": "福徳宮 — 精神的幸福",
+    "opt.palace.fumu": "父母宮 — 父母",
+    "loading.text": "天が読み解かれています…",
+    "result.iching": "神託は語る",
+    "result.bazi": "あなたの四柱",
+    "result.ziwei": "あなたの星図",
+    "result.disclaimer": "この占いは内省と娯楽のために捧げられるものです。神託は道を照らし、歩むのはあなた自身です。",
+    "lock.title": "神託は休息中",
+    "lock.body": "あなたの鍵は定められた回数を使い切りました。新しい神託の鍵、または管理者パスワードでお進みください。",
+    "lock.ph": "神託の鍵または管理者パスワード",
+    "error.title": "神託は沈黙する",
+    "err.gate": "扉は開かれません。もう一度お試しください。",
+    "err.keyUsed": "その鍵は、すでに定められた占いを終えています。",
+    "err.rateAuth": "試みが多すぎます。香が燃える間、しばらくお待ちください。",
+    "err.gatekeeper": "門番に届きませんでした。もう一度お試しください。",
+    "err.needDate": "生年月日を入力してください。",
+    "err.rateReading": "神託は休息を求めています。しばらくして再びお越しください。",
+    "err.unreachable": "神託に届きません — APIキーをご確認ください。",
+    "err.generic": "神託との繋がりが乱れました。もう一度お試しください。"
+  }
+};
+
+function getLang() {
+  return localStorage.getItem(LANG_KEY) === "ja" ? "ja" : "en";
+}
+
+function t(key) {
+  const table = I18N[getLang()];
+  return (key in table ? table[key] : I18N.en[key]) ?? key;
+}
+
+function readingsLabel(n) {
+  if (getLang() === "ja") return n + "回";
+  return n === 1 ? "1 reading" : n + " readings";
+}
+
+function applyLanguage() {
+  const lang = getLang();
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  document.getElementById("lang-toggle").textContent = lang === "ja" ? "English" : "日本語";
+  if (lastRequest) {
+    document.getElementById("result-title").textContent = t(lastRequest.titleKey);
+  }
+}
+
+function toggleLanguage() {
+  localStorage.setItem(LANG_KEY, getLang() === "ja" ? "en" : "ja");
+  applyLanguage();
+  const session = getSession();
+  if (session && session.role === "admin") refreshKeyList(); // re-render statuses
+}
+
 /* =========================================================
    ACCESS CONTROL
    Passwords, API keys, and system prompts live server-side
@@ -1104,9 +1255,9 @@ async function authenticate(password) {
 }
 
 function authErrorMessage(code) {
-  if (code === "key-used") return "That key has already granted its readings.";
-  if (code === "rate-limited") return "Too many attempts. Let the incense burn a moment, then try again.";
-  return "The gate does not open. Try again.";
+  if (code === "key-used") return t("err.keyUsed");
+  if (code === "rate-limited") return t("err.rateAuth");
+  return t("err.gate");
 }
 
 async function applyAuth(auth, inputEl, errEl) {
@@ -1131,7 +1282,7 @@ async function checkPassword() {
   try {
     await applyAuth(await authenticate(inputEl.value), inputEl, errEl);
   } catch (e) {
-    errEl.textContent = "Could not reach the gatekeeper. Try again.";
+    errEl.textContent = t("err.gatekeeper");
   }
 }
 
@@ -1141,27 +1292,23 @@ async function checkLockPassword() {
   try {
     await applyAuth(await authenticate(inputEl.value), inputEl, errEl);
   } catch (e) {
-    errEl.textContent = "Could not reach the gatekeeper. Try again.";
+    errEl.textContent = t("err.gatekeeper");
   }
 }
 
 function updateTopbar() {
   const session = getSession();
-  const topbar = document.getElementById("topbar");
   const badge = document.getElementById("admin-badge");
-  if (session) {
-    topbar.classList.add("visible");
-    badge.style.display = session.role === "admin" ? "inline-block" : "none";
-  } else {
-    topbar.classList.remove("visible");
-  }
+  // The bar stays visible so the language toggle is always reachable
+  document.getElementById("signout-btn").style.display = session ? "inline-block" : "none";
+  badge.style.display = session && session.role === "admin" ? "inline-block" : "none";
 }
 
 /* =========================================================
    SCREEN MANAGEMENT
    ========================================================= */
-const SCREENS = ["password", "home", "form-ask", "form-iching", "form-bazi",
-                 "form-ziwei", "loading", "result", "lock", "error"];
+const SCREENS = ["password", "home", "form-iching", "form-bazi", "form-ziwei",
+                 "loading", "result", "lock", "error"];
 
 function showScreen(name) {
   SCREENS.forEach(s => {
@@ -1203,7 +1350,7 @@ async function requestReading(method, fields, token) {
   const response = await fetch("/api/reading", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, method, fields })
+    body: JSON.stringify({ token, method, fields, lang: getLang() })
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -1211,27 +1358,13 @@ async function requestReading(method, fields, token) {
     err.status = response.status;
     throw err;
   }
-  return data; // { reading, token? }
+  return data; // { reading, remaining? }
 }
 
 /* =========================================================
    READING FLOW
    ========================================================= */
-let lastRequest = null; // { method, fields, hanzi, title, symbol }
-
-function submitAsk() {
-  const question = document.getElementById("ask-question").value.trim();
-  const errEl = document.getElementById("ask-form-error");
-  if (!question) { errEl.textContent = "The oracle cannot answer silence — ask your question."; return; }
-  errEl.textContent = "";
-  startReading({
-    method: "ask",
-    fields: { question },
-    hanzi: "問",
-    title: "The Oracle Answers",
-    symbol: "問"
-  });
-}
+let lastRequest = null; // { method, fields, hanzi, titleKey, symbol }
 
 function submitIChing() {
   const question = document.getElementById("iching-question").value.trim();
@@ -1239,7 +1372,7 @@ function submitIChing() {
     method: "iching",
     fields: { question },
     hanzi: "易經",
-    title: "The Oracle Speaks",
+    titleKey: "result.iching",
     symbol: "卦"
   });
 }
@@ -1247,7 +1380,7 @@ function submitIChing() {
 function submitBaZi() {
   const date = document.getElementById("bazi-date").value;
   const errEl = document.getElementById("bazi-form-error");
-  if (!date) { errEl.textContent = "Please enter your date of birth."; return; }
+  if (!date) { errEl.textContent = t("err.needDate"); return; }
   errEl.textContent = "";
   startReading({
     method: "bazi",
@@ -1259,7 +1392,7 @@ function submitBaZi() {
       focus: document.getElementById("bazi-focus").value
     },
     hanzi: "八字",
-    title: "Your Four Pillars",
+    titleKey: "result.bazi",
     symbol: "命"
   });
 }
@@ -1267,7 +1400,7 @@ function submitBaZi() {
 function submitZiWei() {
   const date = document.getElementById("ziwei-date").value;
   const errEl = document.getElementById("ziwei-form-error");
-  if (!date) { errEl.textContent = "Please enter your date of birth."; return; }
+  if (!date) { errEl.textContent = t("err.needDate"); return; }
   errEl.textContent = "";
   startReading({
     method: "ziwei",
@@ -1278,7 +1411,7 @@ function submitZiWei() {
       palace: document.getElementById("ziwei-palace").value
     },
     hanzi: "紫微",
-    title: "Your Star Chart",
+    titleKey: "result.ziwei",
     symbol: "紫"
   });
 }
@@ -1299,7 +1432,7 @@ async function startReading(request) {
     const data = await requestReading(request.method, request.fields, session.token);
 
     document.getElementById("result-hanzi").textContent = request.hanzi;
-    document.getElementById("result-title").textContent = request.title;
+    document.getElementById("result-title").textContent = t(request.titleKey);
     document.getElementById("result-content").innerHTML = renderMarkdown(data.reading);
     showScreen("result");
 
@@ -1317,11 +1450,11 @@ async function startReading(request) {
     }
     const msgEl = document.getElementById("error-message");
     if (err.status === 429) {
-      msgEl.textContent = "The oracle must rest between consultations. Return in a minute.";
+      msgEl.textContent = t("err.rateReading");
     } else if (err.message === "oracle-unreachable") {
-      msgEl.textContent = "Oracle is unreachable — check your API key.";
+      msgEl.textContent = t("err.unreachable");
     } else {
-      msgEl.textContent = "The connection to the oracle was disturbed. Please try again.";
+      msgEl.textContent = t("err.generic");
     }
     showScreen("error");
   }
@@ -1437,11 +1570,11 @@ async function generateKey() {
     box.style.display = "block";
     document.getElementById("new-key-code").textContent = data.key;
     document.getElementById("new-key-hint").textContent =
-      "Click to copy · " + (data.total === 1 ? "1 reading" : data.total + " readings");
+      t("keys.copy") + " · " + readingsLabel(data.total);
     refreshKeyList();
   } catch (e) {
     if (e.status === 401) { signOut(); return; }
-    errEl.textContent = "The forge is cold — check that the key store is configured.";
+    errEl.textContent = t("keys.forgeError");
   }
 }
 
@@ -1449,7 +1582,7 @@ function copyNewKey() {
   const code = document.getElementById("new-key-code").textContent;
   if (!code) return;
   navigator.clipboard.writeText(code).then(() => {
-    document.getElementById("new-key-hint").textContent = "Copied";
+    document.getElementById("new-key-hint").textContent = t("keys.copied");
   }).catch(() => {});
 }
 
@@ -1461,7 +1594,7 @@ async function refreshKeyList() {
     if (!data.keys.length) {
       const empty = document.createElement("div");
       empty.className = "key-empty";
-      empty.textContent = "No keys forged yet.";
+      empty.textContent = t("keys.empty");
       list.append(empty);
       return;
     }
@@ -1474,8 +1607,9 @@ async function refreshKeyList() {
       const status = document.createElement("span");
       const spent = k.remaining <= 0;
       status.className = "key-status " + (spent ? "spent" : "unspent");
-      status.textContent = spent ? "spent"
-        : k.total === 1 ? "unspent"
+      status.textContent = spent ? t("keys.spent")
+        : k.total === 1 ? t("keys.unspent")
+        : getLang() === "ja" ? "残り " + k.remaining + "／" + k.total + " 回"
         : k.remaining + " of " + k.total + " left";
       row.append(code, status);
       list.append(row);
@@ -1558,6 +1692,7 @@ function initStarfield() {
    ========================================================= */
 (function init() {
   initStarfield();
+  applyLanguage();
   updateTopbar();
   const session = getSession();
   showScreen(session ? "home" : "password");

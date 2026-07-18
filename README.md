@@ -62,8 +62,9 @@ vercel dev
 
 ## Abuse protection
 
-- Every consultation (including "Ask the Oracle") requires a valid session and,
-  for key-holders, spends one key use — there is no unauthenticated AI access.
+- Every consultation requires a valid session and, for key-holders, spends one
+  key use — there is no unauthenticated AI access. Direct questions go through
+  the I Ching form's question field.
 - Per-IP rate limits in Redis: 10 sign-in attempts/min (brute-force
   protection), 8 readings/min, 30 key operations/min. Limits fail open if
   Redis is unreachable so an outage can't lock the admin out; key-use
