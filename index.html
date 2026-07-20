@@ -317,7 +317,7 @@
 
   .cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.4rem;
     margin-top: 3rem;
   }
@@ -517,6 +517,7 @@
     border: 1px solid var(--gold-faint);
     pointer-events: none;
   }
+  .form-panel .eyebrow { margin-bottom: 1.4rem; position: relative; z-index: 1; }
   .field { margin-bottom: 1.5rem; position: relative; z-index: 1; }
   .field .label {
     display: block;
@@ -767,6 +768,13 @@
       <h3 data-i18n="card.ziwei.title">Zi Wei Dou Shu</h3>
       <p data-i18n="card.ziwei.desc">The imperial chart maps the twelve palaces of your destiny.</p>
     </div>
+    <div class="method-card" role="button" tabindex="0" onclick="openForm('couple')"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openForm('couple')}">
+      <div class="card-eyebrow" data-i18n="card.couple.eyebrow">Marriage Compatibility</div>
+      <div class="scroll-hanzi">合婚</div>
+      <h3 data-i18n="card.couple.title">He Hun</h3>
+      <p data-i18n="card.couple.desc">Two charts, one destiny — see how your elements meet, in harmony and in trial.</p>
+    </div>
   </div>
 
   <div class="admin-keys" id="admin-keys" style="display:none">
@@ -920,6 +928,74 @@
   </div>
 </div>
 
+<!-- ============ HE HUN (COUPLE) FORM ============ -->
+<div id="screen-form-couple" class="screen">
+  <div class="form-head">
+    <button class="btn-quiet back-link" onclick="showScreen('home')" data-i18n="common.back">← The Hall</button>
+    <div class="form-hanzi">合婚</div>
+    <h1 class="title" data-i18n="title.couple">He Hun</h1>
+    <div class="rule"></div>
+    <p class="subtitle" data-i18n="form.couple.subtitle">Where two destinies are read side by side.</p>
+  </div>
+  <div class="form-panel">
+    <div class="eyebrow" data-i18n="form.couple.you">You</div>
+    <div class="field">
+      <label class="label" for="couple-a-date" data-i18n="form.date">Date of birth</label>
+      <input type="date" id="couple-a-date">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-a-time" data-i18n="form.bazi.time">Time of birth</label>
+      <input type="time" id="couple-a-time">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-a-place" data-i18n="form.bazi.place">Place of birth</label>
+      <input type="text" id="couple-a-place" placeholder="City, Country" data-i18n-ph="form.bazi.placePh">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-a-gender" data-i18n="form.gender">Gender</label>
+      <select id="couple-a-gender">
+        <option value="Male" data-i18n="opt.male">Male</option>
+        <option value="Female" data-i18n="opt.female">Female</option>
+        <option value="Other" data-i18n="opt.other">Other</option>
+      </select>
+    </div>
+
+    <div class="rule"></div>
+    <div class="eyebrow" data-i18n="form.couple.partner">Your Partner</div>
+    <div class="field">
+      <label class="label" for="couple-b-date" data-i18n="form.date">Date of birth</label>
+      <input type="date" id="couple-b-date">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-b-time" data-i18n="form.bazi.time">Time of birth</label>
+      <input type="time" id="couple-b-time">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-b-place" data-i18n="form.bazi.place">Place of birth</label>
+      <input type="text" id="couple-b-place" placeholder="City, Country" data-i18n-ph="form.bazi.placePh">
+    </div>
+    <div class="field">
+      <label class="label" for="couple-b-gender" data-i18n="form.gender">Gender</label>
+      <select id="couple-b-gender">
+        <option value="Male" data-i18n="opt.male">Male</option>
+        <option value="Female" data-i18n="opt.female">Female</option>
+        <option value="Other" data-i18n="opt.other">Other</option>
+      </select>
+    </div>
+
+    <div class="rule"></div>
+    <div class="field">
+      <label class="label" for="couple-question" data-i18n="form.couple.question">Is there something you wish to know about your future together? (optional)</label>
+      <textarea id="couple-question" maxlength="1000" placeholder="Will we marry? What challenges lie ahead for us?" data-i18n-ph="form.couple.questionPh"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" onclick="submitCouple()" data-i18n="common.consult">Consult the Oracle</button>
+    </div>
+    <div class="error-text" id="couple-form-error" style="text-align:center"></div>
+  </div>
+</div>
+
 <!-- ============ LOADING ============ -->
 <div id="screen-loading" class="screen">
   <div class="observatory">
@@ -1017,7 +1093,7 @@ const I18N = {
     "gate.subtitle": "The Hall of Celestial Divination",
     "gate.ph": "password or oracle key",
     "gate.enter": "Enter the Hall",
-    "home.subtitle": "Three paths cross the night sky. Choose the one that calls to you.",
+    "home.subtitle": "Four paths cross the night sky. Choose the one that calls to you.",
     "card.iching.eyebrow": "Book of Changes",
     "card.iching.title": "I Ching",
     "card.iching.desc": "Cast the hexagram and hear the oracle's counsel on your question.",
@@ -1027,6 +1103,9 @@ const I18N = {
     "card.ziwei.eyebrow": "Purple Star Astrology",
     "card.ziwei.title": "Zi Wei Dou Shu",
     "card.ziwei.desc": "The imperial chart maps the twelve palaces of your destiny.",
+    "card.couple.eyebrow": "Marriage Compatibility",
+    "card.couple.title": "He Hun",
+    "card.couple.desc": "Two charts, one destiny — see how your elements meet, in harmony and in trial.",
     "keys.eyebrow": "Oracle Keys",
     "keys.subtitle": "Forge keys for your seekers — each key carries a set number of readings.",
     "keys.readings": "Readings",
@@ -1040,6 +1119,7 @@ const I18N = {
     "title.iching": "I Ching",
     "title.bazi": "Ba Zi",
     "title.ziwei": "Zi Wei Dou Shu",
+    "title.couple": "He Hun",
     "form.date": "Date of birth",
     "form.gender": "Gender",
     "form.iching.subtitle": "Hold your question in your mind, then consult the oracle.",
@@ -1070,10 +1150,16 @@ const I18N = {
     "opt.palace.qianyi": "Qian Yi 遷移 — Travel", "opt.palace.puyi": "Pu Yi 僕役 — Friends",
     "opt.palace.tianzhai": "Tian Zhai 田宅 — Property", "opt.palace.fude": "Fu De 福德 — Spiritual Fortune",
     "opt.palace.fumu": "Fu Mu 父母 — Parents",
+    "form.couple.subtitle": "Where two destinies are read side by side.",
+    "form.couple.you": "You",
+    "form.couple.partner": "Your Partner",
+    "form.couple.question": "Is there something you wish to know about your future together? (optional)",
+    "form.couple.questionPh": "Will we marry? What challenges lie ahead for us?",
     "loading.text": "The heavens are being read…",
     "result.iching": "The Oracle Speaks",
     "result.bazi": "Your Four Pillars",
     "result.ziwei": "Your Star Chart",
+    "result.couple": "Your Shared Destiny",
     "result.disclaimer": "This reading is offered for reflection and entertainment. The oracle illuminates paths — the walking is yours alone.",
     "lock.title": "The Oracle Rests",
     "lock.body": "Your key has granted all of its readings. Enter a fresh oracle key — or the admin password — to continue.",
@@ -1084,6 +1170,7 @@ const I18N = {
     "err.rateAuth": "Too many attempts. Let the incense burn a moment, then try again.",
     "err.gatekeeper": "Could not reach the gatekeeper. Try again.",
     "err.needDate": "Please enter your date of birth.",
+    "err.needBothDates": "Please enter both dates of birth.",
     "err.rateReading": "The oracle must rest between consultations. Return in a minute.",
     "err.unreachable": "Oracle is unreachable — check your API key.",
     "err.generic": "The connection to the oracle was disturbed. Please try again."
@@ -1100,7 +1187,7 @@ const I18N = {
     "gate.subtitle": "天命占いの殿堂",
     "gate.ph": "パスワードまたは神託の鍵",
     "gate.enter": "入殿する",
-    "home.subtitle": "夜空に交わる三つの古の道。心に呼びかける道をお選びください。",
+    "home.subtitle": "夜空に交わる四つの古の道。心に呼びかける道をお選びください。",
     "card.iching.eyebrow": "変化の書",
     "card.iching.title": "易経",
     "card.iching.desc": "卦を立て、あなたの問いへの神託の導きを聞く。",
@@ -1110,6 +1197,9 @@ const I18N = {
     "card.ziwei.eyebrow": "帝王の星占",
     "card.ziwei.title": "紫微斗数",
     "card.ziwei.desc": "帝の星図が、宿命の十二宮を描き出す。",
+    "card.couple.eyebrow": "二人の運命",
+    "card.couple.title": "相性占い",
+    "card.couple.desc": "二人の五行が響き合う様を見つめ、共に歩む未来を占う。",
     "keys.eyebrow": "神託の鍵",
     "keys.subtitle": "求道者のための鍵を鍛える — 鍵ごとに占いの回数を定めます。",
     "keys.readings": "回数",
@@ -1123,6 +1213,7 @@ const I18N = {
     "title.iching": "易経",
     "title.bazi": "四柱推命",
     "title.ziwei": "紫微斗数",
+    "title.couple": "相性占い",
     "form.date": "生年月日",
     "form.gender": "性別",
     "form.iching.subtitle": "問いを心に抱き、神託に伺いを立てましょう。",
@@ -1153,10 +1244,16 @@ const I18N = {
     "opt.palace.qianyi": "遷移宮 — 旅・移動", "opt.palace.puyi": "僕役宮 — 友人",
     "opt.palace.tianzhai": "田宅宮 — 不動産", "opt.palace.fude": "福徳宮 — 精神的幸福",
     "opt.palace.fumu": "父母宮 — 父母",
+    "form.couple.subtitle": "二人の運命を並べて読み解く。",
+    "form.couple.you": "あなた",
+    "form.couple.partner": "お相手",
+    "form.couple.question": "お二人の未来について知りたいことはありますか？（任意）",
+    "form.couple.questionPh": "結婚できますか？どんな試練が待っていますか？",
     "loading.text": "天が読み解かれています…",
     "result.iching": "神託は語る",
     "result.bazi": "あなたの四柱",
     "result.ziwei": "あなたの星図",
+    "result.couple": "二人の運命",
     "result.disclaimer": "この占いは内省と娯楽のために捧げられるものです。神託は道を照らし、歩むのはあなた自身です。",
     "lock.title": "神託は休息中",
     "lock.body": "あなたの鍵は定められた回数を使い切りました。新しい神託の鍵、または管理者パスワードでお進みください。",
@@ -1167,6 +1264,7 @@ const I18N = {
     "err.rateAuth": "試みが多すぎます。香が燃える間、しばらくお待ちください。",
     "err.gatekeeper": "門番に届きませんでした。もう一度お試しください。",
     "err.needDate": "生年月日を入力してください。",
+    "err.needBothDates": "お二人の生年月日を入力してください。",
     "err.rateReading": "神託は休息を求めています。しばらくして再びお越しください。",
     "err.unreachable": "神託に届きません — APIキーをご確認ください。",
     "err.generic": "神託との繋がりが乱れました。もう一度お試しください。"
@@ -1307,7 +1405,7 @@ function updateTopbar() {
 /* =========================================================
    SCREEN MANAGEMENT
    ========================================================= */
-const SCREENS = ["password", "home", "form-iching", "form-bazi", "form-ziwei",
+const SCREENS = ["password", "home", "form-iching", "form-bazi", "form-ziwei", "form-couple",
                  "loading", "result", "lock", "error"];
 
 function showScreen(name) {
@@ -1413,6 +1511,31 @@ function submitZiWei() {
     hanzi: "紫微",
     titleKey: "result.ziwei",
     symbol: "紫"
+  });
+}
+
+function submitCouple() {
+  const aDate = document.getElementById("couple-a-date").value;
+  const bDate = document.getElementById("couple-b-date").value;
+  const errEl = document.getElementById("couple-form-error");
+  if (!aDate || !bDate) { errEl.textContent = t("err.needBothDates"); return; }
+  errEl.textContent = "";
+  startReading({
+    method: "couple",
+    fields: {
+      aDate,
+      aTime: document.getElementById("couple-a-time").value,
+      aPlace: document.getElementById("couple-a-place").value.trim(),
+      aGender: document.getElementById("couple-a-gender").value,
+      bDate,
+      bTime: document.getElementById("couple-b-time").value,
+      bPlace: document.getElementById("couple-b-place").value.trim(),
+      bGender: document.getElementById("couple-b-gender").value,
+      question: document.getElementById("couple-question").value.trim()
+    },
+    hanzi: "合婚",
+    titleKey: "result.couple",
+    symbol: "合"
   });
 }
 

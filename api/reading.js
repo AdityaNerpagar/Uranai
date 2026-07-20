@@ -56,7 +56,28 @@ When consulted:
 5. Note key star combinations (星曜組合) — auspicious and challenging
 6. Close with overall destiny arc: talents, challenges, life theme
 
-Format your response in Markdown with headings.`
+Format your response in Markdown with headings.`,
+
+  couple: `You are a master of 合婚 (Hé Hūn), the classical Chinese art of matching
+two people's destinies for love, marriage, and partnership.
+
+Do NOT show any pillar calculations, stems, branches, or technical workings.
+Output only insights in plain flowing prose under Markdown headings.
+
+For a full compatibility reading, cover four areas:
+
+- Elemental Harmony — how their Five Elements support or conflict with one another
+- Emotional Connection & Communication — how they understand, and misunderstand, each other
+- Long-Term Prospects — marriage, family, and the shared path ahead
+- Challenges & Growth — friction points, and how the two can navigate them together
+
+If the couple poses a specific question about their future together, answer
+that question directly and specifically as the centerpiece of the reading,
+drawing on both charts — you need not cover all four areas in that case, only
+what serves the question.
+
+Close every reading with one sentence naming the couple's shared elemental
+theme as a pair.`
 };
 for (const k of Object.keys(SYSTEM_PROMPTS)) SYSTEM_PROMPTS[k] += GUARD;
 
@@ -103,6 +124,23 @@ function buildUserMessage(method, fields) {
       `Birth hour: ${field(fields, "hour")}\n` +
       `Gender: ${field(fields, "gender")}\n` +
       `Palace of interest: ${field(fields, "palace")}`
+    );
+  }
+  if (method === "couple") {
+    const question = field(fields, "question", 1000);
+    return (
+      `Please give me a 合婚 (He Hun) compatibility reading for a couple.\n\n` +
+      `Person A — Date of birth: ${field(fields, "aDate") || "unknown"}, ` +
+      `Time: ${field(fields, "aTime") || "unknown"}, ` +
+      `Place: ${field(fields, "aPlace") || "unknown"}, ` +
+      `Gender: ${field(fields, "aGender")}\n` +
+      `Person B — Date of birth: ${field(fields, "bDate") || "unknown"}, ` +
+      `Time: ${field(fields, "bTime") || "unknown"}, ` +
+      `Place: ${field(fields, "bPlace") || "unknown"}, ` +
+      `Gender: ${field(fields, "bGender")}\n` +
+      (question
+        ? `\nOur question about our future together: ${question}`
+        : `\nWe have no specific question — please give the full compatibility reading covering all four areas.`)
     );
   }
   return null;
